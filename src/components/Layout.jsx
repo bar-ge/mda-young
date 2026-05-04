@@ -3,15 +3,6 @@ import { useAuth } from '../contexts/AuthContext'
 
 const nav = [
   {
-    to: '/',
-    label: 'הודעות',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
-  {
     to: '/shifts',
     label: 'משמרות',
     icon: (
@@ -49,7 +40,7 @@ export default function Layout() {
   const { profile } = useAuth()
   const location = useLocation()
 
-  const currentNav = nav.find(n => n.to === location.pathname) || nav[0]
+  const currentNav = nav.find(n => location.pathname.startsWith(n.to)) || nav[0]
 
   return (
     <div className="flex flex-col min-h-svh bg-[#f4f5f7]">
@@ -94,7 +85,6 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
               className={({ isActive }) =>
                 `flex-1 flex flex-col items-center gap-1 py-2 transition-colors ${
                   isActive ? 'text-[#E30613]' : 'text-gray-400'
