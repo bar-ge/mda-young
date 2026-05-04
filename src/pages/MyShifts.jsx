@@ -46,13 +46,15 @@ export default function MyShifts() {
     <div className="flex flex-col gap-4 pt-3">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1 items-end">
-          <span className="text-2xl font-bold text-amber-500">{pendingCount}</span>
-          <span className="text-xs text-gray-500 font-medium">ממתין לאישור</span>
+        <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-amber-50 -translate-y-4 translate-x-4" />
+          <span className="text-3xl font-black text-amber-500 relative">{pendingCount}</span>
+          <span className="text-xs text-gray-500 font-semibold relative">ממתין לאישור</span>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1 items-end">
-          <span className="text-2xl font-bold text-emerald-600">{confirmedCount}</span>
-          <span className="text-xs text-gray-500 font-medium">משמרות מאושרות</span>
+        <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-emerald-50 -translate-y-4 translate-x-4" />
+          <span className="text-3xl font-black text-emerald-600 relative">{confirmedCount}</span>
+          <span className="text-xs text-gray-500 font-semibold relative">מאושרות</span>
         </div>
       </div>
 
@@ -62,9 +64,9 @@ export default function MyShifts() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
               tab === t
-                ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
+                ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25'
                 : 'bg-white text-gray-500 border border-gray-200'
             }`}
           >
