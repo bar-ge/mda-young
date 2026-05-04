@@ -3,6 +3,7 @@ import Branches from './manager/Branches'
 import Templates from './manager/Templates'
 import CreateShift from './manager/CreateShift'
 import BlockedDates from './manager/BlockedDates'
+import MonthCalendar from '../components/MonthCalendar'
 
 const tabs = [
   { id: 'shifts',    label: 'יצירת משמרת', icon: '➕' },
@@ -15,9 +16,9 @@ export default function Manager() {
   const [tab, setTab] = useState('shifts')
 
   return (
-    <div className="flex flex-col gap-4 pt-3">
+    <div className="flex flex-col gap-5 pt-3">
       {/* Sub-tabs */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -34,11 +35,21 @@ export default function Manager() {
         ))}
       </div>
 
-      {/* Content */}
+      {/* Tab content */}
       {tab === 'shifts'    && <CreateShift />}
       {tab === 'templates' && <Templates />}
       {tab === 'branches'  && <Branches />}
       {tab === 'blocked'   && <BlockedDates />}
+
+      {/* Calendar — always visible at bottom */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="w-8" />
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">לוח משמרות</p>
+          <span className="w-8" />
+        </div>
+        <MonthCalendar />
+      </div>
     </div>
   )
 }
