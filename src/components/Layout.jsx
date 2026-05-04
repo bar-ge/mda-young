@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-const nav = [
+const volunteerNav = [
   {
     to: '/shifts',
     label: 'משמרות',
@@ -36,11 +36,34 @@ const nav = [
   },
 ]
 
+const managerExtra = {
+  to: '/manager',
+  label: 'ניהול',
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  ),
+}
+
+const pageTitles = {
+  '/shifts':    'משמרות',
+  '/my-shifts': 'המשמרות שלי',
+  '/profile':   'פרופיל',
+  '/manager':   'ניהול',
+}
+
 export default function Layout() {
   const { profile } = useAuth()
   const location = useLocation()
 
-  const currentNav = nav.find(n => location.pathname.startsWith(n.to)) || nav[0]
+  const isManager = profile?.role === 'admin' || profile?.role === 'dispatcher'
+  const nav = isManager
+    ? [...volunteerNav.slice(0, 2), managerExtra, volunteerNav[2]]
+    : volunteerNav
+
+  const title = pageTitles[location.pathname] || 'מד״א צעירים'
 
   return (
     <div className="flex flex-col min-h-svh bg-[#f4f5f7]">
@@ -70,7 +93,7 @@ export default function Layout() {
 
       {/* Page title */}
       <div className="max-w-lg mx-auto w-full px-4 pt-5 pb-1">
-        <h1 className="text-xl font-bold text-gray-900">{currentNav.label}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
       </div>
 
       {/* Main content */}

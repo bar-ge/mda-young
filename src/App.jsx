@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Shifts from './pages/Shifts'
 import MyShifts from './pages/MyShifts'
 import Profile from './pages/Profile'
+import Manager from './pages/Manager'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -38,9 +39,10 @@ export default function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Navigate to="/shifts" replace />} />
-            <Route path="shifts" element={<Shifts />} />
+            <Route path="shifts"    element={<Shifts />} />
             <Route path="my-shifts" element={<MyShifts />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="manager"   element={<Manager />} />
+            <Route path="profile"   element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/shifts" replace />} />
         </Routes>
