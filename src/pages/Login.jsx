@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
   const { user } = useAuth()
-  const [mode, setMode] = useState('login') // 'login' | 'signup'
+  const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', full_name: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +32,7 @@ export default function Login() {
           options: { data: { full_name: form.full_name } },
         })
         if (error) throw error
-        setSuccess('Check your email to confirm your account.')
+        setSuccess('נשלח אימייל לאימות החשבון. אנא בדוק את תיבת הדואר שלך.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: form.email,
@@ -41,7 +41,9 @@ export default function Login() {
         if (error) throw error
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message === 'Invalid login credentials'
+        ? 'אימייל או סיסמה שגויים'
+        : 'שגיאה: ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -52,11 +54,11 @@ export default function Login() {
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center gap-3">
         <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border border-white/30">
-          <span className="text-white font-bold text-4xl">M</span>
+          <span className="text-white font-bold text-4xl">מ</span>
         </div>
         <div className="text-center">
-          <h1 className="text-white font-bold text-2xl tracking-tight">MDA Young</h1>
-          <p className="text-white/70 text-sm mt-0.5">Volunteer Platform</p>
+          <h1 className="text-white font-bold text-2xl tracking-tight">מד״א צעירים</h1>
+          <p className="text-white/70 text-sm mt-0.5">פלטפורמת מתנדבים</p>
         </div>
       </div>
 
@@ -64,17 +66,15 @@ export default function Login() {
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6">
         {/* Toggle */}
         <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          {['login', 'signup'].map(m => (
+          {[['login', 'כניסה'], ['signup', 'הרשמה']].map(([m, label]) => (
             <button
               key={m}
               onClick={() => { setMode(m); setError(''); setSuccess('') }}
               className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                mode === m
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500'
+                mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
               }`}
             >
-              {m === 'login' ? 'Sign In' : 'Sign Up'}
+              {label}
             </button>
           ))}
         </div>
@@ -82,23 +82,24 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {mode === 'signup' && (
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Full Name</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">שם מלא</label>
               <input
                 type="text"
                 required
                 value={form.full_name}
                 onChange={e => set('full_name', e.target.value)}
-                placeholder="Your full name"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all"
+                placeholder="השם המלא שלך"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all text-right"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Email</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">אימייל</label>
             <input
               type="email"
               required
+              dir="ltr"
               value={form.email}
               onChange={e => set('email', e.target.value)}
               placeholder="you@example.com"
@@ -107,10 +108,11 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Password</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">סיסמה</label>
             <input
               type="password"
               required
+              dir="ltr"
               value={form.password}
               onChange={e => set('password', e.target.value)}
               placeholder="••••••••"
@@ -144,16 +146,16 @@ export default function Login() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                {mode === 'login' ? 'Signing in…' : 'Creating account…'}
+                {mode === 'login' ? 'נכנס...' : 'יוצר חשבון...'}
               </span>
             ) : (
-              mode === 'login' ? 'Sign In' : 'Create Account'
+              mode === 'login' ? 'כניסה' : 'יצירת חשבון'
             )}
           </button>
         </form>
       </div>
 
-      <p className="text-white/50 text-xs mt-6">MDA Israel Volunteer Platform</p>
+      <p className="text-white/50 text-xs mt-6">מד״א ישראל — פלטפורמת מתנדבים</p>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 const nav = [
   {
     to: '/',
-    label: 'Messages',
+    label: 'הודעות',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -13,7 +13,7 @@ const nav = [
   },
   {
     to: '/shifts',
-    label: 'Shifts',
+    label: 'משמרות',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -25,7 +25,7 @@ const nav = [
   },
   {
     to: '/my-shifts',
-    label: 'My Shifts',
+    label: 'המשמרות שלי',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <path d="M9 11l3 3L22 4" />
@@ -35,7 +35,7 @@ const nav = [
   },
   {
     to: '/profile',
-    label: 'Profile',
+    label: 'פרופיל',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -56,12 +56,6 @@ export default function Layout() {
       {/* Header */}
       <header className="glass sticky top-0 z-40 border-b border-gray-100 safe-top">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#E30613] flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="font-semibold text-gray-900 text-sm">MDA Young</span>
-          </div>
           <div className="flex items-center gap-2">
             {profile && (
               <div className="flex items-center gap-2">
@@ -74,10 +68,16 @@ export default function Layout() {
               </div>
             )}
           </div>
+          <div className="flex items-center gap-2.5">
+            <span className="font-semibold text-gray-900 text-sm">מד״א צעירים</span>
+            <div className="w-8 h-8 rounded-lg bg-[#E30613] flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-sm">מ</span>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Page title bar */}
+      {/* Page title */}
       <div className="max-w-lg mx-auto w-full px-4 pt-5 pb-1">
         <h1 className="text-xl font-bold text-gray-900">{currentNav.label}</h1>
       </div>

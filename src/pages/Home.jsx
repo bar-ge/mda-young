@@ -6,10 +6,21 @@ function formatTime(ts) {
   const d = new Date(ts)
   const now = new Date()
   const diff = now - d
-  if (diff < 60000) return 'now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  if (diff < 60000) return 'עכשיו'
+  if (diff < 3600000) return `לפני ${Math.floor(diff / 60000)} דק׳`
+  if (diff < 86400000) return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('he-IL', { month: 'short', day: 'numeric' })
+}
+
+function formatDate(ts) {
+  const d = new Date(ts)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diff = today - msgDay
+  if (diff === 0) return 'היום'
+  if (diff === 86400000) return 'אתמול'
+  return d.toLocaleDateString('he-IL', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 function Avatar({ name, size = 9 }) {
@@ -86,24 +97,25 @@ export default function Home() {
   }
 
   const grouped = messages.reduce((acc, msg) => {
-    const date = new Date(msg.created_at).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
+    const date = formatDate(msg.created_at)
     if (!acc[date]) acc[date] = []
     acc[date].push(msg)
     return acc
   }, {})
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100svh - 8rem)' }}>
+    // dir="ltr" on chat container so own=right, other=left stays consistent in RTL page
+    <div className="flex flex-col" style={{ height: 'calc(100svh - 8rem)' }} dir="ltr">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto scrollbar-hide -mx-4 px-4 py-3 flex flex-col gap-1">
         {messages.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-12">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-12" dir="rtl">
             <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
               <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
               </svg>
             </div>
-            <p className="text-gray-400 text-sm text-center">No messages yet.<br />Start the conversation!</p>
+            <p className="text-gray-400 text-sm text-center">אין הודעות עדיין.<br />התחל את השיחה!</p>
           </div>
         )}
 
@@ -111,7 +123,7 @@ export default function Home() {
           <div key={date}>
             <div className="flex items-center gap-2 my-3">
               <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-[10px] font-medium text-gray-400 px-2">{date}</span>
+              <span className="text-[10px] font-medium text-gray-400 px-2" dir="rtl">{date}</span>
               <div className="flex-1 h-px bg-gray-200" />
             </div>
             {msgs.map((msg, i) => {
@@ -125,16 +137,19 @@ export default function Home() {
                   {!isOwn && isSameUser && <div className="w-9" />}
                   <div className={`max-w-[78%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
                     {!isOwn && !isSameUser && (
-                      <span className="text-[11px] font-semibold text-gray-500 ml-1">
-                        {sender?.full_name || 'Volunteer'}
-                        {sender?.role === 'admin' && <span className="ml-1 text-[10px] bg-[#E30613]/10 text-[#E30613] px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
+                      <span className="text-[11px] font-semibold text-gray-500 ml-1" dir="rtl">
+                        {sender?.full_name || 'מתנדב'}
+                        {sender?.role === 'admin' && <span className="mr-1 text-[10px] bg-[#E30613]/10 text-[#E30613] px-1.5 py-0.5 rounded-full font-medium">מנהל</span>}
                       </span>
                     )}
-                    <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      isOwn
-                        ? 'bg-[#E30613] text-white rounded-tr-sm shadow-sm shadow-red-500/20'
-                        : 'bg-white text-gray-900 rounded-tl-sm shadow-sm shadow-black/5 border border-gray-100'
-                    }`}>
+                    <div
+                      dir="rtl"
+                      className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                        isOwn
+                          ? 'bg-[#E30613] text-white rounded-tr-sm shadow-sm shadow-red-500/20'
+                          : 'bg-white text-gray-900 rounded-tl-sm shadow-sm shadow-black/5 border border-gray-100'
+                      }`}
+                    >
                       {msg.content}
                     </div>
                     {(!msgs[i + 1] || msgs[i + 1]?.sender_id !== msg.sender_id) && (
@@ -150,17 +165,8 @@ export default function Home() {
       </div>
 
       {/* Input */}
-      <div className="pt-3 border-t border-gray-100">
+      <div className="pt-3 border-t border-gray-100" dir="rtl">
         <form onSubmit={send} className="flex gap-2 items-end">
-          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-sm">
-            <input
-              value={text}
-              onChange={e => setText(e.target.value)}
-              placeholder="Type a message…"
-              className="flex-1 text-sm text-gray-900 placeholder-gray-400 outline-none bg-transparent"
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(e) } }}
-            />
-          </div>
           <button
             type="submit"
             disabled={!text.trim() || sending}
@@ -170,6 +176,16 @@ export default function Home() {
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
           </button>
+          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-sm">
+            <input
+              dir="rtl"
+              value={text}
+              onChange={e => setText(e.target.value)}
+              placeholder="...כתוב הודעה"
+              className="flex-1 text-sm text-gray-900 placeholder-gray-400 outline-none bg-transparent text-right"
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(e) } }}
+            />
+          </div>
         </form>
       </div>
     </div>
