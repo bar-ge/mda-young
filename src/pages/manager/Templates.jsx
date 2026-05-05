@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 
 function pad(n) { return String(n).padStart(2, '0') }
 function hourLabel(h) { return `${pad(h)}:00` }
@@ -39,12 +40,6 @@ function DaysPicker({ value, onChange }) {
   )
 }
 
-function daysLabel(days) {
-  if (!days || days.length === 0) return 'כל הימים'
-  if (days.length === 7) return 'כל הימים'
-  return days.map(d => DAYS[d]?.short).join(' ')
-}
-
 const emptyForm = {
   name: '', branch_id: '', start_hour: 8, end_hour: 14,
   max_volunteers: 1, description: '', days_of_week: [],
@@ -52,7 +47,6 @@ const emptyForm = {
 
 function TemplateForm({ initial = emptyForm, branches, onSave, onCancel, saving }) {
   const [form, setForm] = useState(initial)
-
   function set(field, value) { setForm(f => ({ ...f, [field]: value })) }
 
   return (
@@ -132,12 +126,78 @@ function TemplateForm({ initial = emptyForm, branches, onSave, onCancel, saving 
   )
 }
 
+async function runGenerate(templates, daysAhead, userId) {
+  const active = templates.filter(t => t.active)
+  if (!active.length) return 0
+
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const until = new Date(now.getTime() + daysAhead * 86400000)
+
+  const { data: existing } = await supabase
+    .from('shifts')
+    .select('template_id, start_time')
+    .gte('start_time', now.toISOString())
+    .lt('start_time', until.toISOString())
+    .not('template_id', 'is', null)
+
+  const existingSet = new Set(
+    (existing || []).map(s => {
+      const d = new Date(s.start_time)
+      return `${s.template_id}:${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+    })
+  )
+
+  const toInsert = []
+  for (const tpl of active) {
+    const days = tpl.days_of_week?.length > 0 ? tpl.days_of_week : null
+    for (let i = 0; i < daysAhead; i++) {
+      const date = new Date(now)
+      date.setDate(date.getDate() + i)
+      if (days && !days.includes(date.getDay())) continue
+
+      const dateStr = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`
+      if (existingSet.has(`${tpl.id}:${dateStr}`)) continue
+
+      const start = new Date(date)
+      start.setHours(tpl.start_hour, 0, 0, 0)
+      const end = new Date(date)
+      end.setHours(tpl.end_hour, 0, 0, 0)
+      if (end <= start) end.setDate(end.getDate() + 1)
+
+      toInsert.push({
+        title: tpl.name,
+        description: tpl.description || null,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        max_volunteers: tpl.max_volunteers,
+        branch_id: tpl.branch_id || null,
+        template_id: tpl.id,
+        shift_type: 'regular',
+        status: 'open',
+        created_by: userId,
+      })
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from('shifts').insert(toInsert)
+    if (error) throw error
+  }
+  return toInsert.length
+}
+
 export default function Templates() {
+  const { user } = useAuth()
   const [templates, setTemplates] = useState([])
   const [branches, setBranches] = useState([])
   const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState(null) // null | 'new' | { editing: template }
+  const [mode, setMode] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [daysAhead, setDaysAhead] = useState(14)
+  const [generating, setGenerating] = useState(false)
+  const [genResult, setGenResult] = useState(null)
+  const autoRan = useRef(false)
 
   useEffect(() => { load() }, [])
 
@@ -150,6 +210,26 @@ export default function Templates() {
     if (t) setTemplates(t)
     if (b) setBranches(b)
     setLoading(false)
+
+    if (!autoRan.current && t?.some(tpl => tpl.active)) {
+      autoRan.current = true
+      try {
+        const count = await runGenerate(t, 14, user.id)
+        if (count > 0) setGenResult({ count, auto: true })
+      } catch (_) {}
+    }
+  }
+
+  async function handleGenerate() {
+    setGenerating(true)
+    setGenResult(null)
+    try {
+      const count = await runGenerate(templates, daysAhead, user.id)
+      setGenResult({ count, auto: false })
+    } catch (_) {
+      setGenResult({ count: -1, auto: false })
+    }
+    setGenerating(false)
   }
 
   async function handleSave(form) {
@@ -163,13 +243,11 @@ export default function Templates() {
       description: form.description?.trim() || null,
       days_of_week: form.days_of_week || [],
     }
-
     if (mode?.editing) {
       await supabase.from('shift_templates').update(payload).eq('id', mode.editing.id)
     } else {
       await supabase.from('shift_templates').insert(payload)
     }
-
     setMode(null)
     await load()
     setSaving(false)
@@ -186,8 +264,70 @@ export default function Templates() {
     await load()
   }
 
+  const activeCount = templates.filter(t => t.active).length
+
   return (
     <div className="flex flex-col gap-3">
+
+      {/* Auto-generate panel */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <select
+            value={daysAhead}
+            onChange={e => setDaysAhead(Number(e.target.value))}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-xs text-right focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] bg-white"
+          >
+            <option value={7}>שבוע קדימה</option>
+            <option value={14}>שבועיים קדימה</option>
+            <option value={21}>3 שבועות קדימה</option>
+            <option value={30}>חודש קדימה</option>
+          </select>
+          <div className="text-right">
+            <p className="text-xs font-bold text-gray-800">יצירה אוטומטית</p>
+            <p className="text-[10px] text-gray-400">
+              {activeCount > 0 ? `${activeCount} תבניות פעילות` : 'אין תבניות פעילות'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleGenerate}
+          disabled={generating || loading || activeCount === 0}
+          className="w-full py-2.5 bg-[#E30613] text-white text-sm font-bold rounded-xl shadow-sm shadow-red-500/20 disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          {generating ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              יוצר משמרות...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              צור משמרות לפי תבניות
+            </>
+          )}
+        </button>
+
+        {genResult && (
+          <div className={`flex items-center justify-end gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold ${
+            genResult.count === -1  ? 'bg-red-50 text-red-600' :
+            genResult.count === 0   ? 'bg-gray-50 text-gray-500' :
+                                      'bg-emerald-50 text-emerald-700'
+          }`}>
+            {genResult.count === -1  ? 'שגיאה ביצירת משמרות' :
+             genResult.count === 0   ? 'כל המשמרות כבר קיימות ✓' :
+             `${genResult.count} משמרות נוצרו${genResult.auto ? ' אוטומטית' : ''} ✓`}
+          </div>
+        )}
+
+        <p className="text-[10px] text-gray-400 text-right leading-relaxed">
+          רץ אוטומטית בפתיחת הדף לשבועיים קדימה · מדלג על משמרות קיימות
+        </p>
+      </div>
+
+      {/* Templates list header */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-400">{templates.length} תבניות</span>
         <button
@@ -200,7 +340,6 @@ export default function Templates() {
         </button>
       </div>
 
-      {/* New template form */}
       {mode === 'new' && (
         <TemplateForm
           branches={branches}
@@ -222,7 +361,6 @@ export default function Templates() {
       ) : (
         templates.map(t => (
           <div key={t.id} className="flex flex-col gap-0">
-            {/* Edit form inline */}
             {mode?.editing?.id === t.id ? (
               <TemplateForm
                 initial={{
@@ -241,7 +379,6 @@ export default function Templates() {
               />
             ) : (
               <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 ${!t.active ? 'opacity-55' : ''}`}>
-                {/* Top row */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => deleteTemplate(t.id)}
@@ -267,7 +404,6 @@ export default function Templates() {
                   </div>
                 </div>
 
-                {/* Days of week */}
                 <div className="flex items-center justify-end gap-1.5">
                   {(t.days_of_week?.length === 0 || !t.days_of_week) ? (
                     <span className="text-[10px] text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">כל הימים</span>
