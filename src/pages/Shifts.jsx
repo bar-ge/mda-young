@@ -101,9 +101,9 @@ export default function Shifts() {
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-5rem)]">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0">
       {/* Filter + legend row */}
-      <div className="flex items-center justify-between lg:shrink-0">
+      <div className="flex items-center justify-between">
         <div className="flex gap-2">
           {[['open', 'פתוחות'], ['all', 'הכל']].map(([f, label]) => (
             <button key={f} onClick={() => { setFilter(f); setSelected(null); }}
@@ -128,8 +128,8 @@ export default function Shifts() {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
-        <div className="min-w-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
+      <div className={`lg:gap-6 lg:items-start ${selected ? 'lg:grid lg:grid-cols-[1fr,380px]' : ''}`}>
+        <div className="min-w-0">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -143,20 +143,10 @@ export default function Shifts() {
           />
         </div>
 
-        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto">
-          {/* placeholder so the right column isn't empty when nothing is selected */}
-          {!selected && (
-            <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
-              <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
-                <line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/>
-              </svg>
-              <p className="text-sm">בחר יום לצפייה במשמרות</p>
-            </div>
-          )}
+        {selected && (
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3">
 
       {/* Day detail panel */}
-      {selected && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -264,9 +254,9 @@ export default function Shifts() {
               )
             })
           )}
-        </div>
-      )}
+        </div>{/* detail panel */}
         </div>{/* right column */}
+        )}{/* end selected */}
       </div>{/* desktop grid */}
     </div>
   )

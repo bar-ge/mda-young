@@ -33,18 +33,18 @@ export default function Manager() {
   }
 
   return (
-    <div className="pt-3 lg:pt-0 lg:h-[calc(100svh-5rem)] lg:flex lg:flex-col">
+    <div className="pt-3 lg:pt-0">
 
       {/* ── Desktop: side-by-side ── */}
-      <div className="lg:grid lg:grid-cols-[1fr,420px] lg:gap-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+      <div className="lg:grid lg:grid-cols-[1fr,420px] lg:gap-6 lg:items-start">
 
-        {/* Left col: calendar — scrolls independently */}
-        <div className="min-w-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        {/* Left col: calendar */}
+        <div className="min-w-0">
           <MonthCalendar jumpToDate={jumpToDate} />
         </div>
 
-        {/* Right col: tabs + content — scrolls independently */}
-        <div className="min-w-0 flex flex-col gap-4 mt-4 lg:mt-0 lg:h-full lg:overflow-y-auto">
+        {/* Right col: tabs + content */}
+        <div className="min-w-0 flex flex-col gap-4 mt-4 lg:mt-0">
 
           {/* Divider (mobile only) */}
           <div className="flex items-center gap-3 lg:hidden">
