@@ -25,10 +25,11 @@ export default function MonthCalendar({ jumpToDate }) {
   const [blocked,  setBlocked]  = useState([])
   const [selected, setSelected] = useState(null)
   const [loading,  setLoading]  = useState(true)
-  const [deleting, setDeleting] = useState(null)
-  const [closing,  setClosing]  = useState(false)
-  const [toggling, setToggling] = useState(null)
-  const [togVet,   setTogVet]   = useState(null)
+  const [manualMap, setManualMap] = useState({})
+  const [deleting,  setDeleting]  = useState(null)
+  const [closing,   setClosing]   = useState(false)
+  const [toggling,  setToggling]  = useState(null)
+  const [togVet,    setTogVet]    = useState(null)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -49,15 +50,26 @@ export default function MonthCalendar({ jumpToDate }) {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: sh }, { data: bl }] = await Promise.all([
+    const [{ data: sh }, { data: bl }, { data: ma }] = await Promise.all([
       supabase.from('shifts')
         .select('id, title, start_time, end_time, status, shift_type, location, veteran_only')
         .gte('start_time', from).lte('start_time', to).order('start_time'),
       supabase.from('blocked_dates').select('date, reason')
         .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
+      supabase.from('shift_assignments')
+        .select('id, shift_id, manual_name')
+        .not('manual_name', 'is', null),
     ])
     if (sh) setShifts(sh)
     if (bl) setBlocked(bl)
+    if (ma) {
+      const map = {}
+      ma.forEach(a => {
+        if (!map[a.shift_id]) map[a.shift_id] = []
+        map[a.shift_id].push(a)
+      })
+      setManualMap(map)
+    }
     setLoading(false)
   }
 
@@ -271,6 +283,8 @@ export default function MonthCalendar({ jumpToDate }) {
               const style     = typeStyle[s.shift_type] || typeStyle.regular
               const isClosed  = s.status === 'cancelled'
 
+              const manuals = manualMap[s.id] || []
+
               return (
                 <div key={s.id} className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ${isClosed ? 'bg-gray-50 ring-gray-200 opacity-70' : `bg-gray-50 ${style.ring}`}`}>
                   {/* Top row: delete | title+time | status */}
@@ -303,6 +317,17 @@ export default function MonthCalendar({ jumpToDate }) {
                                               'bg-amber-50 text-amber-700'
                     }`}>{isClosed ? 'סגורה' : style.label}</span>
                   </div>
+
+                  {/* Manual assignments */}
+                  {manuals.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 justify-end">
+                      {manuals.map(a => (
+                        <span key={a.id} className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
+                          👤 {a.manual_name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Bottom row: veteran badge | actions */}
                   <div className="flex items-center justify-between gap-2">
