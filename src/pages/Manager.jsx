@@ -17,7 +17,7 @@ export default function Manager() {
   const { setYear, setMonth, invalidate } = useCalendar()
   const [tab, setTab] = useState('shifts')
   const [jumpToDate, setJumpToDate] = useState(null)
-  const calendarRef = useRef(null)
+  const formRef = useRef(null)
 
   function handleShiftCreated(dateStr) {
     const d = new Date(dateStr + 'T12:00:00')
@@ -25,19 +25,30 @@ export default function Manager() {
     setMonth(d.getMonth())
     setJumpToDate(dateStr)
     invalidate()
-    setTimeout(() => {
-      calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 300)
   }
 
   return (
-    <div className="flex flex-col gap-5 pt-3">
+    <div className="flex flex-col gap-4 pt-3">
+
+      {/* Calendar — always at the top */}
+      <MonthCalendar jumpToDate={jumpToDate} />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">פעולות</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
       {/* Sub-tabs */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
         {tabs.map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id)
+              setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+            }}
             className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
               tab === t.id
                 ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
@@ -51,20 +62,13 @@ export default function Manager() {
       </div>
 
       {/* Tab content */}
-      {tab === 'shifts'    && <CreateShift onShiftCreated={handleShiftCreated} />}
-      {tab === 'templates' && <Templates />}
-      {tab === 'branches'  && <Branches />}
-      {tab === 'blocked'   && <BlockedDates />}
-
-      {/* Calendar — always visible at bottom */}
-      <div className="flex flex-col gap-2" ref={calendarRef}>
-        <div className="flex items-center justify-between">
-          <span className="w-8" />
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">לוח משמרות</p>
-          <span className="w-8" />
-        </div>
-        <MonthCalendar jumpToDate={jumpToDate} />
+      <div ref={formRef}>
+        {tab === 'shifts'    && <CreateShift onShiftCreated={handleShiftCreated} />}
+        {tab === 'templates' && <Templates />}
+        {tab === 'branches'  && <Branches />}
+        {tab === 'blocked'   && <BlockedDates />}
       </div>
+
     </div>
   )
 }
