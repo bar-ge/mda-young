@@ -119,7 +119,7 @@ export default function CreateShift({ onShiftCreated }) {
       template_id: form.template_id || null,
       veteran_only: form.veteran_only,
       shift_type: shiftType,
-      status: shiftType === 'holiday' ? 'cancelled' : 'open',
+      status: shiftType === 'holiday' || form.veteran_only ? 'cancelled' : 'open',
       created_by: user.id,
     }
 
@@ -268,19 +268,24 @@ export default function CreateShift({ onShiftCreated }) {
             </div>
 
             {/* Veteran only */}
-            <label className="flex items-center justify-end gap-3 cursor-pointer select-none">
-              <span className="text-sm font-medium text-gray-700">בוגרים בלבד 🎖️</span>
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={form.veteran_only}
-                  onChange={e => set('veteran_only', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-10 h-6 bg-gray-200 rounded-full peer peer-checked:bg-purple-500 transition-colors" />
-                <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-4" />
-              </div>
-            </label>
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center justify-end gap-3 cursor-pointer select-none">
+                <span className="text-sm font-medium text-gray-700">בוגרים בלבד 🎖️</span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={form.veteran_only}
+                    onChange={e => set('veteran_only', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-6 bg-gray-200 rounded-full peer peer-checked:bg-purple-500 transition-colors" />
+                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-4" />
+                </div>
+              </label>
+              {form.veteran_only && (
+                <p className="text-xs text-purple-600 text-right">המשמרת תיסגר למתנדבים — לבוגרים בלבד</p>
+              )}
+            </div>
           </>
         )}
 
