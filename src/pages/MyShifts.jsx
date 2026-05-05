@@ -118,7 +118,7 @@ export default function MyShifts() {
               </svg>
             </button>
             <span className="font-bold text-gray-900 text-sm text-right">
-              {new Date(selected + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {(() => { const d = new Date(selected + 'T12:00:00'); return `${d.toLocaleDateString('he-IL',{weekday:'long'})} · ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}` })()}
             </span>
           </div>
 

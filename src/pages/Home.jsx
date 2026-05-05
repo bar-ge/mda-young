@@ -9,7 +9,7 @@ function formatTime(ts) {
   if (diff < 60000) return 'עכשיו'
   if (diff < 3600000) return `לפני ${Math.floor(diff / 60000)} דק׳`
   if (diff < 86400000) return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleDateString('he-IL', { month: 'short', day: 'numeric' })
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`
 }
 
 function formatDate(ts) {
@@ -20,7 +20,7 @@ function formatDate(ts) {
   const diff = today - msgDay
   if (diff === 0) return 'היום'
   if (diff === 86400000) return 'אתמול'
-  return d.toLocaleDateString('he-IL', { weekday: 'long', month: 'long', day: 'numeric' })
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`
 }
 
 function Avatar({ name, size = 9 }) {

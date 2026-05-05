@@ -3,8 +3,13 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCalendar } from '../../contexts/CalendarContext'
 
-function formatDate(d) {
-  return new Date(d + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+function formatDate(str) {
+  const d = new Date(str + 'T12:00:00')
+  const weekday = d.toLocaleDateString('he-IL', { weekday: 'long' })
+  const dd = String(d.getDate()).padStart(2,'0')
+  const mm = String(d.getMonth()+1).padStart(2,'0')
+  const yy = String(d.getFullYear()).slice(-2)
+  return `${weekday} · ${dd}/${mm}/${yy}`
 }
 
 export default function BlockedDates() {

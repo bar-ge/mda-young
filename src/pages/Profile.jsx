@@ -165,7 +165,7 @@ export default function Profile() {
         {[
           { label: 'אימייל',     value: user?.email, dir: 'ltr' },
           { label: 'טלפון',      value: profile.phone || '—' },
-          { label: 'תאריך לידה', value: profile.birth_date ? new Date(profile.birth_date + 'T12:00:00').toLocaleDateString('he-IL') : '—' },
+          { label: 'תאריך לידה', value: profile.birth_date ? (() => { const d = new Date(profile.birth_date + 'T12:00:00'); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}` })() : '—' },
           { label: 'תפקיד',      value: roleLabels[roleKey] },
         ].map((row, i, arr) => (
           <div key={i} className={`px-5 py-3.5 flex items-center justify-between ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>

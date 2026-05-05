@@ -4,7 +4,8 @@ import { useCalendar } from '../../contexts/CalendarContext'
 import { isoDate } from '../../components/CalendarGrid'
 
 function formatDate(ts) {
-  return new Date(ts).toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'short' })
+  const d = new Date(ts)
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`
 }
 function formatHour(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
