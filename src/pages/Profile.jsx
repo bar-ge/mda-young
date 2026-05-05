@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 const roleLabels = {
   admin: 'מנהל',
-  dispatcher: 'מוקדן',
+  dispatcher: 'סדרן',
   volunteer: 'מתנדב',
 }
 

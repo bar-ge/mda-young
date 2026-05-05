@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
 
 const DAYS_HEADER = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 
 const typeStyle = {
-  regular: { dot: 'bg-[#E30613]',  label: 'משמרת',  ring: 'ring-[#E30613]/30' },
-  event:   { dot: 'bg-amber-400',  label: 'אירוע',  ring: 'ring-amber-400/30' },
-  holiday: { dot: 'bg-gray-400',   label: 'סגור',   ring: 'ring-gray-300' },
+  regular: { dot: 'bg-[#E30613]',  label: 'משמרת', ring: 'ring-[#E30613]/30' },
+  event:   { dot: 'bg-amber-400',  label: 'אירוע', ring: 'ring-amber-400/30' },
+  holiday: { dot: 'bg-gray-400',   label: 'סגור',  ring: 'ring-gray-300'     },
 }
 
 function isoDate(y, m, d) {
@@ -18,12 +19,16 @@ function formatHour(ts) {
 }
 
 export default function MonthCalendar({ jumpToDate }) {
+  const { user } = useAuth()
   const { year, month, setYear, setMonth, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
   const [shifts,   setShifts]   = useState([])
   const [blocked,  setBlocked]  = useState([])
   const [selected, setSelected] = useState(null)
   const [loading,  setLoading]  = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const [closing,  setClosing]  = useState(false)
+  const [toggling, setToggling] = useState(null)
+  const [togVet,   setTogVet]   = useState(null)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -45,7 +50,8 @@ export default function MonthCalendar({ jumpToDate }) {
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
     const [{ data: sh }, { data: bl }] = await Promise.all([
-      supabase.from('shifts').select('id, title, start_time, end_time, status, shift_type, location')
+      supabase.from('shifts')
+        .select('id, title, start_time, end_time, status, shift_type, location, veteran_only')
         .gte('start_time', from).lte('start_time', to).order('start_time'),
       supabase.from('blocked_dates').select('date, reason')
         .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
@@ -63,6 +69,39 @@ export default function MonthCalendar({ jumpToDate }) {
     setShifts(prev => prev.filter(s => s.id !== shiftId))
     invalidate()
     setDeleting(null)
+  }
+
+  async function toggleShiftStatus(shift) {
+    const newStatus = shift.status === 'cancelled' ? 'open' : 'cancelled'
+    setToggling(shift.id)
+    await supabase.from('shifts').update({ status: newStatus }).eq('id', shift.id)
+    setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, status: newStatus } : s))
+    invalidate()
+    setToggling(null)
+  }
+
+  async function toggleVeteran(shift) {
+    const newVal = !shift.veteran_only
+    setTogVet(shift.id)
+    await supabase.from('shifts').update({ veteran_only: newVal }).eq('id', shift.id)
+    setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal } : s))
+    setTogVet(null)
+  }
+
+  async function closeDay(dateStr) {
+    setClosing(true)
+    await supabase.from('blocked_dates').upsert({ date: dateStr, created_by: user?.id })
+    setBlocked(prev => [...prev.filter(b => b.date !== dateStr), { date: dateStr, reason: null }])
+    invalidate()
+    setClosing(false)
+  }
+
+  async function openDay(dateStr) {
+    setClosing(true)
+    await supabase.from('blocked_dates').delete().eq('date', dateStr)
+    setBlocked(prev => prev.filter(b => b.date !== dateStr))
+    invalidate()
+    setClosing(false)
   }
 
   const today = new Date()
@@ -119,6 +158,10 @@ export default function MonthCalendar({ jumpToDate }) {
           <span className="text-xs">🔒</span>
           חסום
         </span>
+        <span className="flex items-center gap-1.5 text-[10px] text-gray-500">
+          <span className="text-xs">🎖️</span>
+          בוגר
+        </span>
       </div>
 
       {/* Calendar grid */}
@@ -137,7 +180,7 @@ export default function MonthCalendar({ jumpToDate }) {
           <div className="grid grid-cols-7">
             {cells.map((day, idx) => {
               if (!day) return <div key={`e${idx}`} className="min-h-[52px] border-b border-r border-gray-50 last:border-r-0" />
-              const dateStr  = isoDate(year, month, day)
+              const dateStr   = isoDate(year, month, day)
               const dayShifts = shiftMap[dateStr] || []
               const isBlocked = blockedSet.has(dateStr)
               const isToday   = dateStr === todayStr
@@ -179,17 +222,40 @@ export default function MonthCalendar({ jumpToDate }) {
       {/* Selected day detail */}
       {selected && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+
+          {/* Day header */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              {/* Close / open day button */}
+              {selectedBlocked ? (
+                <button
+                  onClick={() => openDay(selected)}
+                  disabled={closing}
+                  className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full hover:bg-emerald-100 transition-colors disabled:opacity-40"
+                >
+                  {closing ? '...' : 'בטל חסימה ✓'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => closeDay(selected)}
+                  disabled={closing}
+                  className="flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40"
+                >
+                  {closing ? '...' : '🔒 סגור יום'}
+                </button>
+              )}
+            </div>
             <span className="font-semibold text-gray-900 text-sm text-right">
               {new Date(selected + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
 
+          {/* Blocked reason */}
           {selectedBlocked && (
             <div className="flex items-center justify-end gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
               <span className="text-sm text-gray-600 font-medium">{selectedReason || 'יום חסום'}</span>
@@ -197,40 +263,87 @@ export default function MonthCalendar({ jumpToDate }) {
             </div>
           )}
 
+          {/* Shifts list */}
           {selectedShifts.length === 0 && !selectedBlocked ? (
             <p className="text-gray-400 text-sm text-center py-2">אין משמרות ביום זה</p>
           ) : (
             selectedShifts.map(s => {
-              const style = typeStyle[s.shift_type] || typeStyle.regular
+              const style     = typeStyle[s.shift_type] || typeStyle.regular
+              const isClosed  = s.status === 'cancelled'
+
               return (
-                <div key={s.id} className={`flex flex-col gap-2 bg-gray-50 rounded-xl px-3 py-2.5 ring-1 ${style.ring}`}>
+                <div key={s.id} className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ${isClosed ? 'bg-gray-50 ring-gray-200 opacity-70' : `bg-gray-50 ${style.ring}`}`}>
+                  {/* Top row: delete | title+time | status */}
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => deleteShift(s.id)}
                       disabled={deleting === s.id}
                       className="shrink-0 w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
-                      title="מחק משמרת"
+                      title="מחק"
                     >
                       {deleting === s.id ? (
                         <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                         </svg>
                       )}
                     </button>
                     <div className="flex-1 text-right">
-                      <p className="font-semibold text-gray-900 text-sm">{s.title}</p>
+                      <p className={`font-semibold text-sm ${isClosed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{s.title}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {formatHour(s.start_time)} – {formatHour(s.end_time)}
                         {s.location && ` · ${s.location}`}
                       </p>
                     </div>
                     <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      s.status === 'open'      ? 'bg-emerald-50 text-emerald-700' :
-                      s.status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
-                                                 'bg-amber-50 text-amber-700'
-                    }`}>{style.label}</span>
+                      isClosed              ? 'bg-gray-100 text-gray-400' :
+                      s.status === 'open'   ? 'bg-emerald-50 text-emerald-700' :
+                                              'bg-amber-50 text-amber-700'
+                    }`}>{isClosed ? 'סגורה' : style.label}</span>
+                  </div>
+
+                  {/* Bottom row: veteran badge | actions */}
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Veteran badge */}
+                    <div className="flex items-center gap-1.5">
+                      {s.veteran_only && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                          🎖️ בוגר בלבד
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Veteran toggle */}
+                      <button
+                        onClick={() => toggleVeteran(s)}
+                        disabled={togVet === s.id}
+                        title={s.veteran_only ? 'הסר דרישת בוגר' : 'סמן כ"בוגר בלבד"'}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
+                          s.veteran_only
+                            ? 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200'
+                            : 'bg-white text-gray-400 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200'
+                        }`}
+                      >
+                        {togVet === s.id ? '...' : '🎖️ בוגר'}
+                      </button>
+
+                      {/* Close / open shift */}
+                      <button
+                        onClick={() => toggleShiftStatus(s)}
+                        disabled={toggling === s.id}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
+                          isClosed
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {toggling === s.id ? '...' : isClosed ? 'פתח משמרת' : 'סגור משמרת'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )

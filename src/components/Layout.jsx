@@ -57,7 +57,7 @@ const pageTitles = {
 
 const roleLabels = {
   admin:      'מנהל',
-  dispatcher: 'מוקדן',
+  dispatcher: 'סדרן',
   volunteer:  'מתנדב',
 }
 
@@ -78,7 +78,7 @@ export default function Layout() {
       <div className="flex min-h-svh bg-[#f0f2f5]">
 
         {/* ── Desktop sidebar (left) ── */}
-        <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-60 bg-white border-r border-gray-100 shadow-sm z-40">
+        <aside className="hidden lg:flex flex-col fixed inset-y-0 right-0 w-60 bg-white border-l border-gray-100 shadow-sm z-40">
           {/* Brand */}
           <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 shrink-0">
             <div className="w-9 h-9 rounded-xl bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/40 shrink-0">
@@ -137,7 +137,7 @@ export default function Layout() {
         </aside>
 
         {/* ── Main column ── */}
-        <div className="flex-1 lg:ml-60 flex flex-col min-h-svh">
+        <div className="flex-1 lg:mr-60 flex flex-col min-h-svh">
 
           {/* Mobile header */}
           <header className="lg:hidden glass sticky top-0 z-40 border-b border-gray-100/80 safe-top">

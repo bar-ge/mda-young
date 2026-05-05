@@ -5,12 +5,19 @@ import { useAuth } from '../contexts/AuthContext'
 
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='1.2' fill='white' fill-opacity='0.12'/%3E%3C/svg%3E")`
 
+function dobToPassword(dob) {
+  // dob is YYYY-MM-DD → password is DDMMYYYY
+  if (!dob) return ''
+  const [y, m, d] = dob.split('-')
+  return `${d}${m}${y}`
+}
+
 export default function Login() {
   const { user } = useAuth()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ email: '', password: '', full_name: '' })
+  const [form, setForm] = useState({ email: '', dob: '', full_name: '', phone: '' })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
   const [success, setSuccess] = useState('')
 
   if (user) return <Navigate to="/" replace />
@@ -26,30 +33,54 @@ export default function Login() {
     setError('')
     setSuccess('')
 
+    const password = dobToPassword(form.dob)
+    if (password.length < 8) {
+      setError('תאריך לידה לא תקין')
+      setLoading(false)
+      return
+    }
+
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: form.email,
-          password: form.password,
-          options: { data: { full_name: form.full_name } },
+          password,
+          options: { data: { full_name: form.full_name, phone: form.phone } },
         })
         if (error) throw error
-        setSuccess('נשלח אימייל לאימות החשבון. אנא בדוק את תיבת הדואר שלך.')
+
+        // Save phone to profile immediately (user record exists even before email confirm)
+        if (data.user) {
+          await supabase.from('profiles').upsert({
+            id:        data.user.id,
+            full_name: form.full_name.trim(),
+            phone:     form.phone.trim() || null,
+            role:      'volunteer',
+          })
+        }
+
+        setSuccess('הרישום הושלם! ניתן להתחבר עם תאריך הלידה שלך.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: form.email,
-          password: form.password,
+          password,
         })
         if (error) throw error
       }
     } catch (err) {
-      setError(err.message === 'Invalid login credentials'
-        ? 'אימייל או סיסמה שגויים'
-        : 'שגיאה: ' + err.message)
+      setError(
+        err.message === 'Invalid login credentials'
+          ? 'אימייל או תאריך לידה שגויים'
+          : err.message === 'User already registered'
+          ? 'האימייל כבר רשום. נסה להתחבר.'
+          : 'שגיאה: ' + err.message
+      )
     } finally {
       setLoading(false)
     }
   }
+
+  const inputCls = "w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all text-right"
 
   return (
     <div
@@ -73,7 +104,6 @@ export default function Login() {
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
         </div>
-
         <div className="text-center">
           <h1 className="text-white font-bold text-2xl tracking-tight leading-tight">מד״א צעירים</h1>
           <p className="text-white/65 text-sm mt-1 font-medium">ניהול משמרות מתנדבים</p>
@@ -82,7 +112,6 @@ export default function Login() {
 
       {/* Card */}
       <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl shadow-black/25 overflow-hidden">
-        {/* Red accent bar */}
         <div className="h-1 bg-gradient-to-r from-[#E30613] via-[#ff2233] to-[#E30613]" />
 
         <div className="p-6 flex flex-col gap-5">
@@ -105,20 +134,36 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+            {/* Signup-only fields */}
             {mode === 'signup' && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-500 text-right">שם מלא</label>
-                <input
-                  type="text"
-                  required
-                  value={form.full_name}
-                  onChange={e => set('full_name', e.target.value)}
-                  placeholder="השם המלא שלך"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all text-right"
-                />
-              </div>
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 text-right">שם מלא *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.full_name}
+                    onChange={e => set('full_name', e.target.value)}
+                    placeholder="השם המלא שלך"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 text-right">טלפון</label>
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    value={form.phone}
+                    onChange={e => set('phone', e.target.value)}
+                    placeholder="050-000-0000"
+                    className={inputCls + ' text-left'}
+                  />
+                </div>
+              </>
             )}
 
+            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-500 text-right">אימייל</label>
               <input
@@ -128,21 +173,22 @@ export default function Login() {
                 value={form.email}
                 onChange={e => set('email', e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all"
+                className={inputCls + ' text-left'}
               />
             </div>
 
+            {/* Date of birth (used as password) */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-500 text-right">סיסמה</label>
+              <label className="text-xs font-semibold text-gray-500 text-right">תאריך לידה</label>
               <input
-                type="password"
+                type="date"
                 required
-                dir="ltr"
-                value={form.password}
-                onChange={e => set('password', e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all"
+                value={form.dob}
+                onChange={e => set('dob', e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                className={inputCls}
               />
+              <p className="text-[10px] text-gray-400 text-right">תאריך הלידה משמש כסיסמה לכניסה למערכת</p>
             </div>
 
             {error && (

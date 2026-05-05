@@ -30,7 +30,7 @@ export default function CreateShift({ onShiftCreated }) {
   const [form, setForm] = useState({
     title: '', description: '', location: '',
     start_time: todayAt(8), end_time: todayAt(14),
-    max_volunteers: 1, branch_id: '', template_id: '',
+    max_volunteers: 1, branch_id: '', template_id: '', veteran_only: false,
   })
 
   useEffect(() => { loadOptions() }, [])
@@ -88,6 +88,7 @@ export default function CreateShift({ onShiftCreated }) {
       max_volunteers: Number(form.max_volunteers),
       branch_id: form.branch_id || null,
       template_id: form.template_id || null,
+      veteran_only: form.veteran_only,
       shift_type: shiftType,
       status: shiftType === 'holiday' ? 'cancelled' : 'open',
       created_by: user.id,
@@ -215,6 +216,21 @@ export default function CreateShift({ onShiftCreated }) {
                 rows={2} placeholder='פרטים נוספים על המשמרת'
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] resize-none" />
             </div>
+
+            {/* Veteran only */}
+            <label className="flex items-center justify-end gap-3 cursor-pointer select-none">
+              <span className="text-sm font-medium text-gray-700">בוגרים בלבד 🎖️</span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={form.veteran_only}
+                  onChange={e => set('veteran_only', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-6 bg-gray-200 rounded-full peer peer-checked:bg-purple-500 transition-colors" />
+                <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-all peer-checked:translate-x-4" />
+              </div>
+            </label>
           </>
         )}
 
