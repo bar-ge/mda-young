@@ -16,10 +16,17 @@ function ProtectedRoute({ children }) {
 
 function Splash() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-[#E30613] flex items-center justify-center shadow-lg">
-          <span className="text-white font-bold text-2xl">מ</span>
+    <div className="fixed inset-0 flex items-center justify-center bg-[#f0f2f5]">
+      <div className="flex flex-col items-center gap-5">
+        <div className="w-20 h-20 rounded-3xl bg-[#E30613] flex items-center justify-center shadow-xl shadow-red-500/30">
+          <svg viewBox="0 0 48 48" fill="white" className="w-10 h-10">
+            <rect x="18" y="2" width="12" height="44" rx="3"/>
+            <rect x="2" y="18" width="44" height="12" rx="3"/>
+          </svg>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="font-bold text-gray-900 text-lg tracking-tight">מד״א צעירים</span>
+          <span className="text-xs text-gray-400">טוען...</span>
         </div>
         <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
       </div>
