@@ -254,10 +254,10 @@ export default function Shifts() {
               )
             })
           )}
-        </div>{/* detail panel */}
-        </div>{/* right column */}
-        )}{/* end selected */}
-      </div>{/* desktop grid */}
+        </div>
+        </div>
+        )}
+      </div>
     </div>
   )
 }

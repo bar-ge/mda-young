@@ -165,10 +165,10 @@ export default function MyShifts() {
               )
             })
           )}
-        </div>{/* detail panel */}
-        </div>{/* right column wrapper */}
-      )}{/* end selected */}
-      </div>{/* desktop grid */}
+        </div>
+        </div>
+        )}
+      </div>
     </div>
   )
 }
