@@ -17,6 +17,11 @@ function isoDate(y, m, d) {
 function formatHour(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
+function toLocalDT(ts) {
+  const d = new Date(ts)
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
+}
 
 export default function MonthCalendar({ jumpToDate }) {
   const { user } = useAuth()
@@ -32,6 +37,9 @@ export default function MonthCalendar({ jumpToDate }) {
   const [toggling,         setToggling]         = useState(null)
   const [togVet,           setTogVet]           = useState(null)
   const [removing,         setRemoving]         = useState(null)
+  const [editingId,        setEditingId]        = useState(null)
+  const [editForm,         setEditForm]         = useState({})
+  const [saving,           setSaving]           = useState(false)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -54,7 +62,7 @@ export default function MonthCalendar({ jumpToDate }) {
 
     const [{ data: sh }, { data: bl }] = await Promise.all([
       supabase.from('shifts')
-        .select('id, title, start_time, end_time, status, shift_type, location, veteran_only')
+        .select('id, title, description, start_time, end_time, status, shift_type, location, veteran_only, max_volunteers')
         .gte('start_time', from).lte('start_time', to).order('start_time'),
       supabase.from('blocked_dates').select('date, reason')
         .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
@@ -164,6 +172,39 @@ export default function MonthCalendar({ jumpToDate }) {
     setBlocked(prev => prev.filter(b => b.date !== dateStr))
     invalidate()
     setClosing(false)
+  }
+
+  function startEdit(s) {
+    setEditingId(s.id)
+    setEditForm({
+      title:          s.title || '',
+      description:    s.description || '',
+      location:       s.location || '',
+      start_time:     toLocalDT(s.start_time),
+      end_time:       toLocalDT(s.end_time),
+      max_volunteers: s.max_volunteers ?? 1,
+      veteran_only:   s.veteran_only || false,
+    })
+  }
+
+  async function saveEdit(shiftId) {
+    if (!editForm.title.trim()) return
+    setSaving(true)
+    const payload = {
+      title:          editForm.title.trim(),
+      description:    editForm.description.trim() || null,
+      location:       editForm.location.trim() || null,
+      start_time:     new Date(editForm.start_time).toISOString(),
+      end_time:       new Date(editForm.end_time).toISOString(),
+      max_volunteers: parseInt(editForm.max_volunteers) || 1,
+      veteran_only:   editForm.veteran_only,
+    }
+    const { data } = await supabase
+      .from('shifts').update(payload).eq('id', shiftId).select().single()
+    if (data) setShifts(prev => prev.map(s => s.id === shiftId ? { ...s, ...data } : s))
+    setEditingId(null)
+    invalidate()
+    setSaving(false)
   }
 
   const today = new Date()
@@ -330,117 +371,180 @@ export default function MonthCalendar({ jumpToDate }) {
             <p className="text-gray-400 text-sm text-center py-2">אין משמרות ביום זה</p>
           ) : (
             selectedShifts.map(s => {
-              const style     = typeStyle[s.shift_type] || typeStyle.regular
-              const isClosed  = s.status === 'cancelled'
-
-              const manuals = manualMap[s.id] || []
+              const style    = typeStyle[s.shift_type] || typeStyle.regular
+              const isClosed = s.status === 'cancelled'
+              const manuals  = manualMap[s.id] || []
+              const isEditing = editingId === s.id
 
               return (
-                <div key={s.id} className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ${isClosed ? 'bg-gray-50 ring-gray-200 opacity-70' : `bg-gray-50 ${style.ring}`}`}>
-                  {/* Top row: delete | title+time | status */}
-                  <div className="flex items-start justify-between gap-2">
-                    <button
-                      onClick={() => deleteShift(s.id)}
-                      disabled={deleting === s.id}
-                      className="shrink-0 w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
-                      title="מחק"
-                    >
-                      {deleting === s.id ? (
-                        <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                        </svg>
-                      )}
-                    </button>
-                    <div className="flex-1 text-right">
-                      <p className={`font-semibold text-sm ${isClosed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{s.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {formatHour(s.start_time)} – {formatHour(s.end_time)}
-                        {s.location && ` · ${s.location}`}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isClosed              ? 'bg-gray-100 text-gray-400' :
-                      s.status === 'open'   ? 'bg-emerald-50 text-emerald-700' :
-                                              'bg-amber-50 text-amber-700'
-                    }`}>{isClosed ? 'סגורה' : style.label}</span>
-                  </div>
+                <div key={s.id} className={`flex flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ${isClosed && !isEditing ? 'bg-gray-50 ring-gray-200 opacity-70' : `bg-gray-50 ${style.ring}`}`}>
 
-                  {/* Assigned volunteers (confirmed app users + manual) */}
-                  {((confirmedMap[s.id] || []).length > 0 || manuals.length > 0) && (
-                    <div className="flex flex-col gap-1">
-                      {/* App-registered confirmed volunteers */}
-                      {(confirmedMap[s.id] || []).map(a => (
-                        <div key={a.id} className="flex items-center justify-between gap-2 bg-emerald-50 rounded-lg px-2.5 py-1.5">
-                          <button
-                            onClick={() => removeAssignment(a.id, s.id, false)}
-                            disabled={removing === a.id}
-                            className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm"
-                          >
-                            {removing === a.id ? '·' : '×'}
-                          </button>
-                          <span className="text-xs font-medium text-emerald-800 text-right flex-1">✓ {a.name}</span>
+                  {isEditing ? (
+                    /* ── Inline edit form ── */
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <button onClick={() => setEditingId(null)} className="text-xs text-gray-400 hover:text-gray-600">ביטול</button>
+                        <span className="text-xs font-bold text-gray-700">עריכת משמרת</span>
+                      </div>
+
+                      {/* Title */}
+                      <input
+                        value={editForm.title}
+                        onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                        placeholder="כותרת *"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]"
+                      />
+
+                      {/* Location */}
+                      <input
+                        value={editForm.location}
+                        onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))}
+                        placeholder="מיקום (אופציונלי)"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]"
+                      />
+
+                      {/* Times */}
+                      {s.shift_type !== 'holiday' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] text-gray-400 mb-1 text-right">סיום</label>
+                            <input type="datetime-local" value={editForm.end_time}
+                              onChange={e => setEditForm(f => ({ ...f, end_time: e.target.value }))}
+                              className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] text-gray-400 mb-1 text-right">התחלה</label>
+                            <input type="datetime-local" value={editForm.start_time}
+                              onChange={e => setEditForm(f => ({ ...f, start_time: e.target.value }))}
+                              className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                          </div>
                         </div>
-                      ))}
-                      {/* Manual assignments */}
-                      {manuals.map(a => (
-                        <div key={a.id} className="flex items-center justify-between gap-2 bg-sky-50 rounded-lg px-2.5 py-1.5">
-                          <button
-                            onClick={() => removeAssignment(a.id, s.id, true)}
-                            disabled={removing === a.id}
-                            className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm"
-                          >
-                            {removing === a.id ? '·' : '×'}
-                          </button>
-                          <span className="text-xs font-medium text-sky-800 text-right flex-1">👤 {a.manual_name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Bottom row: veteran badge | actions */}
-                  <div className="flex items-center justify-between gap-2">
-                    {/* Veteran badge */}
-                    <div className="flex items-center gap-1.5">
-                      {s.veteran_only && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                          🎖️ בוגר בלבד
-                        </span>
                       )}
-                    </div>
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2">
+                      {/* Max volunteers */}
+                      <div className="flex items-center justify-between gap-2">
+                        <input type="number" min="1" max="999" value={editForm.max_volunteers}
+                          onChange={e => setEditForm(f => ({ ...f, max_volunteers: e.target.value }))}
+                          className="w-20 px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                        <span className="text-xs text-gray-500">מקסימום מתנדבים</span>
+                      </div>
+
                       {/* Veteran toggle */}
-                      <button
-                        onClick={() => toggleVeteran(s)}
-                        disabled={togVet === s.id}
-                        title={s.veteran_only ? 'הסר דרישת בוגר' : 'סמן כ"בוגר בלבד"'}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
-                          s.veteran_only
-                            ? 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200'
-                            : 'bg-white text-gray-400 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200'
-                        }`}
-                      >
-                        {togVet === s.id ? '...' : '🎖️ בוגר'}
-                      </button>
+                      <label className="flex items-center justify-end gap-2 cursor-pointer">
+                        <span className="text-xs text-gray-600">בוגרים בלבד 🎖️</span>
+                        <button type="button"
+                          onClick={() => setEditForm(f => ({ ...f, veteran_only: !f.veteran_only }))}
+                          className={`w-9 h-5 rounded-full transition-colors ${editForm.veteran_only ? 'bg-purple-500' : 'bg-gray-200'} relative`}>
+                          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${editForm.veteran_only ? 'right-0.5' : 'left-0.5'}`} />
+                        </button>
+                      </label>
 
-                      {/* Close / open shift */}
+                      {/* Save */}
                       <button
-                        onClick={() => toggleShiftStatus(s)}
-                        disabled={toggling === s.id}
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
-                          isClosed
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
-                        }`}
+                        onClick={() => saveEdit(s.id)}
+                        disabled={saving || !editForm.title.trim()}
+                        className="w-full py-2 rounded-lg bg-[#E30613] text-white text-xs font-bold disabled:opacity-40 active:scale-[0.98] transition-all shadow-sm shadow-red-500/20"
                       >
-                        {toggling === s.id ? '...' : isClosed ? 'פתח משמרת' : 'סגור משמרת'}
+                        {saving ? '...שומר' : 'שמירת שינויים'}
                       </button>
                     </div>
-                  </div>
+                  ) : (
+                    /* ── Normal view ── */
+                    <>
+                      {/* Top row: delete | edit | title+time | status */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => deleteShift(s.id)}
+                            disabled={deleting === s.id}
+                            className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
+                          >
+                            {deleting === s.id ? (
+                              <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                              </svg>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => startEdit(s)}
+                            className="w-7 h-7 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center hover:bg-sky-100 transition-colors"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <p className={`font-semibold text-sm ${isClosed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{s.title}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {formatHour(s.start_time)} – {formatHour(s.end_time)}
+                            {s.location && ` · ${s.location}`}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isClosed            ? 'bg-gray-100 text-gray-400' :
+                          s.status === 'open' ? 'bg-emerald-50 text-emerald-700' :
+                                                'bg-amber-50 text-amber-700'
+                        }`}>{isClosed ? 'סגורה' : style.label}</span>
+                      </div>
+
+                      {/* Assigned volunteers */}
+                      {((confirmedMap[s.id] || []).length > 0 || manuals.length > 0) && (
+                        <div className="flex flex-col gap-1">
+                          {(confirmedMap[s.id] || []).map(a => (
+                            <div key={a.id} className="flex items-center justify-between gap-2 bg-emerald-50 rounded-lg px-2.5 py-1.5">
+                              <button onClick={() => removeAssignment(a.id, s.id, false)} disabled={removing === a.id}
+                                className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm">
+                                {removing === a.id ? '·' : '×'}
+                              </button>
+                              <span className="text-xs font-medium text-emerald-800 text-right flex-1">✓ {a.name}</span>
+                            </div>
+                          ))}
+                          {manuals.map(a => (
+                            <div key={a.id} className="flex items-center justify-between gap-2 bg-sky-50 rounded-lg px-2.5 py-1.5">
+                              <button onClick={() => removeAssignment(a.id, s.id, true)} disabled={removing === a.id}
+                                className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm">
+                                {removing === a.id ? '·' : '×'}
+                              </button>
+                              <span className="text-xs font-medium text-sky-800 text-right flex-1">👤 {a.manual_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Bottom row: veteran badge | actions */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {s.veteran_only && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                              🎖️ בוגר בלבד
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleVeteran(s)} disabled={togVet === s.id}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
+                              s.veteran_only
+                                ? 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200'
+                                : 'bg-white text-gray-400 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200'
+                            }`}>
+                            {togVet === s.id ? '...' : '🎖️ בוגר'}
+                          </button>
+                          <button onClick={() => toggleShiftStatus(s)} disabled={toggling === s.id}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
+                              isClosed
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100'
+                            }`}>
+                            {toggling === s.id ? '...' : isClosed ? 'פתח משמרת' : 'סגור משמרת'}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )
             })

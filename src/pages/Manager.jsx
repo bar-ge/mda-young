@@ -4,12 +4,14 @@ import Templates from './manager/Templates'
 import CreateShift from './manager/CreateShift'
 import BlockedDates from './manager/BlockedDates'
 import Dispatcher from './manager/Dispatcher'
+import ShiftsList from './manager/ShiftsList'
 import MonthCalendar from '../components/MonthCalendar'
 import { useCalendar } from '../contexts/CalendarContext'
 
 const tabs = [
   { id: 'dispatcher', label: 'אישורים',     icon: '✓'  },
   { id: 'shifts',     label: 'יצירת משמרת', icon: '➕' },
+  { id: 'list',       label: 'משמרות',       icon: '📅' },
   { id: 'templates',  label: 'תבניות',       icon: '📋' },
   { id: 'branches',   label: 'סניפים',       icon: '🏥' },
   { id: 'blocked',    label: 'חסימות',       icon: '🔒' },
@@ -75,6 +77,7 @@ export default function Manager() {
           <div ref={formRef}>
             {tab === 'dispatcher' && <Dispatcher />}
             {tab === 'shifts'     && <CreateShift onShiftCreated={handleShiftCreated} />}
+            {tab === 'list'       && <ShiftsList />}
             {tab === 'templates'  && <Templates />}
             {tab === 'branches'   && <Branches />}
             {tab === 'blocked'    && <BlockedDates />}
