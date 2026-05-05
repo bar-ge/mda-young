@@ -36,12 +36,12 @@ export default function Manager() {
       <div className="lg:grid lg:grid-cols-[1fr,420px] lg:gap-6 lg:items-start">
 
         {/* Left col on desktop / top on mobile: calendar */}
-        <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-4">
+        <div className="min-w-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:overflow-x-hidden lg:pb-4">
           <MonthCalendar jumpToDate={jumpToDate} />
         </div>
 
         {/* Right col on desktop / below on mobile: tabs + content */}
-        <div className="flex flex-col gap-4 mt-4 lg:mt-0">
+        <div className="min-w-0 flex flex-col gap-4 mt-4 lg:mt-0">
 
           {/* Divider (mobile only) */}
           <div className="flex items-center gap-3 lg:hidden">

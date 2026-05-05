@@ -21,15 +21,17 @@ function formatHour(ts) {
 export default function MonthCalendar({ jumpToDate }) {
   const { user } = useAuth()
   const { year, month, setYear, setMonth, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
-  const [shifts,   setShifts]   = useState([])
-  const [blocked,  setBlocked]  = useState([])
-  const [selected, setSelected] = useState(null)
-  const [loading,  setLoading]  = useState(true)
-  const [manualMap, setManualMap] = useState({})
-  const [deleting,  setDeleting]  = useState(null)
-  const [closing,   setClosing]   = useState(false)
-  const [toggling,  setToggling]  = useState(null)
-  const [togVet,    setTogVet]    = useState(null)
+  const [shifts,           setShifts]           = useState([])
+  const [blocked,          setBlocked]          = useState([])
+  const [selected,         setSelected]         = useState(null)
+  const [loading,          setLoading]          = useState(true)
+  const [manualMap,        setManualMap]        = useState({})
+  const [confirmedMap,     setConfirmedMap]     = useState({})
+  const [deleting,         setDeleting]         = useState(null)
+  const [closing,          setClosing]          = useState(false)
+  const [toggling,         setToggling]         = useState(null)
+  const [togVet,           setTogVet]           = useState(null)
+  const [removing,         setRemoving]         = useState(null)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -50,26 +52,62 @@ export default function MonthCalendar({ jumpToDate }) {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: sh }, { data: bl }, { data: ma }] = await Promise.all([
+    const [{ data: sh }, { data: bl }] = await Promise.all([
       supabase.from('shifts')
         .select('id, title, start_time, end_time, status, shift_type, location, veteran_only')
         .gte('start_time', from).lte('start_time', to).order('start_time'),
       supabase.from('blocked_dates').select('date, reason')
         .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
-      supabase.from('shift_assignments')
-        .select('id, shift_id, manual_name')
-        .not('manual_name', 'is', null),
     ])
+
     if (sh) setShifts(sh)
     if (bl) setBlocked(bl)
-    if (ma) {
-      const map = {}
-      ma.forEach(a => {
-        if (!map[a.shift_id]) map[a.shift_id] = []
-        map[a.shift_id].push(a)
-      })
-      setManualMap(map)
+
+    const shiftIds = sh?.map(s => s.id) || []
+    if (shiftIds.length) {
+      const [{ data: ma }, { data: ca }] = await Promise.all([
+        supabase.from('shift_assignments')
+          .select('id, shift_id, manual_name')
+          .not('manual_name', 'is', null)
+          .in('shift_id', shiftIds),
+        supabase.from('shift_assignments')
+          .select('id, shift_id, user_id')
+          .eq('status', 'confirmed')
+          .is('manual_name', null)
+          .in('shift_id', shiftIds),
+      ])
+
+      if (ma) {
+        const mmap = {}
+        ma.forEach(a => {
+          if (!mmap[a.shift_id]) mmap[a.shift_id] = []
+          mmap[a.shift_id].push(a)
+        })
+        setManualMap(mmap)
+      }
+
+      if (ca && ca.length) {
+        const userIds = [...new Set(ca.map(a => a.user_id).filter(Boolean))]
+        const { data: profiles } = userIds.length
+          ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
+          : { data: [] }
+        const pm = {}
+        profiles?.forEach(p => { pm[p.id] = p })
+
+        const cmap = {}
+        ca.forEach(a => {
+          if (!cmap[a.shift_id]) cmap[a.shift_id] = []
+          cmap[a.shift_id].push({ id: a.id, name: pm[a.user_id]?.full_name || 'מתנדב' })
+        })
+        setConfirmedMap(cmap)
+      } else {
+        setConfirmedMap({})
+      }
+    } else {
+      setManualMap({})
+      setConfirmedMap({})
     }
+
     setLoading(false)
   }
 
@@ -81,6 +119,18 @@ export default function MonthCalendar({ jumpToDate }) {
     setShifts(prev => prev.filter(s => s.id !== shiftId))
     invalidate()
     setDeleting(null)
+  }
+
+  async function removeAssignment(assignmentId, shiftId, isManual) {
+    setRemoving(assignmentId)
+    await supabase.from('shift_assignments').delete().eq('id', assignmentId)
+    if (isManual) {
+      setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+    } else {
+      setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+    }
+    invalidate()
+    setRemoving(null)
   }
 
   async function toggleShiftStatus(shift) {
@@ -318,13 +368,34 @@ export default function MonthCalendar({ jumpToDate }) {
                     }`}>{isClosed ? 'סגורה' : style.label}</span>
                   </div>
 
-                  {/* Manual assignments */}
-                  {manuals.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 justify-end">
+                  {/* Assigned volunteers (confirmed app users + manual) */}
+                  {((confirmedMap[s.id] || []).length > 0 || manuals.length > 0) && (
+                    <div className="flex flex-col gap-1">
+                      {/* App-registered confirmed volunteers */}
+                      {(confirmedMap[s.id] || []).map(a => (
+                        <div key={a.id} className="flex items-center justify-between gap-2 bg-emerald-50 rounded-lg px-2.5 py-1.5">
+                          <button
+                            onClick={() => removeAssignment(a.id, s.id, false)}
+                            disabled={removing === a.id}
+                            className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm"
+                          >
+                            {removing === a.id ? '·' : '×'}
+                          </button>
+                          <span className="text-xs font-medium text-emerald-800 text-right flex-1">✓ {a.name}</span>
+                        </div>
+                      ))}
+                      {/* Manual assignments */}
                       {manuals.map(a => (
-                        <span key={a.id} className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
-                          👤 {a.manual_name}
-                        </span>
+                        <div key={a.id} className="flex items-center justify-between gap-2 bg-sky-50 rounded-lg px-2.5 py-1.5">
+                          <button
+                            onClick={() => removeAssignment(a.id, s.id, true)}
+                            disabled={removing === a.id}
+                            className="shrink-0 w-5 h-5 rounded bg-white text-red-400 flex items-center justify-center text-xs hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 shadow-sm"
+                          >
+                            {removing === a.id ? '·' : '×'}
+                          </button>
+                          <span className="text-xs font-medium text-sky-800 text-right flex-1">👤 {a.manual_name}</span>
+                        </div>
                       ))}
                     </div>
                   )}

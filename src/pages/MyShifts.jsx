@@ -85,7 +85,7 @@ export default function MyShifts() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
-        <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-4">
+        <div className="min-w-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:overflow-x-hidden lg:pb-4">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -98,7 +98,7 @@ export default function MyShifts() {
           />
         </div>
 
-        <div className="mt-4 lg:mt-0 flex flex-col gap-3">
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3">
           {!selected && (
             <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
               <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">

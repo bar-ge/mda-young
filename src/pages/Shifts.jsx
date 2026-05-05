@@ -129,7 +129,7 @@ export default function Shifts() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
-        <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-4">
+        <div className="min-w-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:overflow-x-hidden lg:pb-4">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -143,7 +143,7 @@ export default function Shifts() {
           />
         </div>
 
-        <div className="mt-4 lg:mt-0 flex flex-col gap-3">
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3">
           {/* placeholder so the right column isn't empty when nothing is selected */}
           {!selected && (
             <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
