@@ -144,7 +144,7 @@ export default function Shifts() {
         </div>
 
         {selected && (
-        <div className="min-w-0 mt-4 lg:mt-0 lg:w-[380px] lg:shrink-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 mt-4 lg:mt-0 lg:pt-11 lg:w-[380px] lg:shrink-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto scrollbar-hide">
 
       {/* Day detail panel */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
