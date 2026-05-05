@@ -72,7 +72,7 @@ export default function Profile() {
   const roleKey = profile.role || 'volunteer'
 
   return (
-    <div className="flex flex-col gap-4 pt-3">
+    <div className="flex flex-col gap-4 pt-3 lg:h-[calc(100svh-5rem)] lg:overflow-y-auto scrollbar-hide">
 
       {/* Avatar card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-3 text-center">
