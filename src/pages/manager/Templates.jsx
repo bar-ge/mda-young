@@ -254,7 +254,18 @@ export default function Templates() {
   }
 
   async function deleteTemplate(id) {
-    if (!confirm('למחוק את התבנית?')) return
+    if (!confirm('למחוק את התבנית וכל המשמרות שנוצרו ממנה?')) return
+
+    // Fetch shift IDs for this template
+    const { data: shiftRows } = await supabase
+      .from('shifts').select('id').eq('template_id', id)
+    const shiftIds = (shiftRows || []).map(s => s.id)
+
+    // Delete assignments → shifts → template in order
+    if (shiftIds.length > 0) {
+      await supabase.from('shift_assignments').delete().in('shift_id', shiftIds)
+      await supabase.from('shifts').delete().in('id', shiftIds)
+    }
     await supabase.from('shift_templates').delete().eq('id', id)
     await load()
   }
