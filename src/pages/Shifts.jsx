@@ -32,6 +32,7 @@ export default function Shifts() {
   const [shifts,        setShifts]        = useState([])
   const [blocked,       setBlocked]       = useState([])
   const [myAssignments, setMyAssignments] = useState({})
+  const [confirmedMap,  setConfirmedMap]  = useState({})
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState('open')
   const [selected, setSelected] = useState(null)
@@ -60,6 +61,21 @@ export default function Shifts() {
       setMyAssignments(map)
     }
     if (bl) setBlocked(bl)
+
+    const shiftIds = sh?.map(s => s.id) || []
+    if (shiftIds.length) {
+      const { data: confirmed } = await supabase
+        .from('shift_assignments')
+        .select('shift_id')
+        .eq('status', 'confirmed')
+        .in('shift_id', shiftIds)
+      if (confirmed) {
+        const cmap = {}
+        confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+        setConfirmedMap(cmap)
+      }
+    }
+
     setLoading(false)
   }
 
@@ -168,6 +184,7 @@ export default function Shifts() {
               const isPast     = new Date(shift.start_time) <= now
               const statusCfg  = statusConfig[shift.status] || statusConfig.open
               const isEvent    = shift.shift_type === 'event'
+              const isFull     = shift.max_volunteers > 0 && (confirmedMap[shift.id] || 0) >= shift.max_volunteers
 
               return (
                 <div key={shift.id} className={`flex flex-col gap-3 rounded-2xl border p-3.5 ${
@@ -214,7 +231,11 @@ export default function Shifts() {
                     </span>
 
                     {!isPast && shift.status === 'open' && (
-                      assignment ? (
+                      isFull && !assignment ? (
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-50 text-red-500 border border-red-100">
+                          המשמרת מלאה
+                        </span>
+                      ) : assignment ? (
                         <div className="flex items-center gap-2">
                           {assignment.status === 'pending' && (
                             <button onClick={() => cancelAssignment(assignment.id, shift.id)} disabled={acting === shift.id}

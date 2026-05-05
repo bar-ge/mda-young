@@ -22,10 +22,11 @@ function initials(name) {
 
 /* ─── Approvals sub-view ─── */
 function Approvals({ invalidate }) {
-  const [assignments, setAssignments] = useState([])
-  const [loading,     setLoading]     = useState(true)
-  const [filter,      setFilter]      = useState('pending')
-  const [acting,      setActing]      = useState(null)
+  const [assignments,  setAssignments]  = useState([])
+  const [confirmedMap, setConfirmedMap] = useState({})
+  const [loading,      setLoading]      = useState(true)
+  const [filter,       setFilter]       = useState('pending')
+  const [acting,       setActing]       = useState(null)
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => { load() }, [filter])
@@ -49,13 +50,21 @@ function Approvals({ invalidate }) {
       return
     }
 
-    const userIds = [...new Set(rows.map(a => a.user_id).filter(Boolean))]
-    const { data: profiles } = await supabase
-      .from('profiles').select('id, full_name, phone').in('id', userIds)
+    const userIds  = [...new Set(rows.map(a => a.user_id).filter(Boolean))]
+    const shiftIds = [...new Set(rows.map(a => a.shift_id).filter(Boolean))]
+
+    const [{ data: profiles }, { data: confirmed }] = await Promise.all([
+      supabase.from('profiles').select('id, full_name, phone').in('id', userIds),
+      supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
+    ])
 
     const pm = {}
     profiles?.forEach(p => { pm[p.id] = p })
     setAssignments(rows.map(a => ({ ...a, profile: pm[a.user_id] })))
+
+    const cmap = {}
+    confirmed?.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+    setConfirmedMap(cmap)
 
     if (filter === 'pending') setPendingCount(rows.length)
     else                      await refreshPendingCount()
@@ -73,12 +82,21 @@ function Approvals({ invalidate }) {
 
   async function decide(id, status) {
     setActing(id)
+    const assignment = assignments.find(a => a.id === id)
     await supabase.from('shift_assignments').update({ status }).eq('id', id)
     setAssignments(prev =>
       filter === 'pending'
         ? prev.filter(a => a.id !== id)
         : prev.map(a => a.id === id ? { ...a, status } : a)
     )
+    if (assignment) {
+      const sid = assignment.shift_id
+      if (status === 'confirmed') {
+        setConfirmedMap(prev => ({ ...prev, [sid]: (prev[sid] || 0) + 1 }))
+      } else if (assignment.status === 'confirmed' && status !== 'confirmed') {
+        setConfirmedMap(prev => ({ ...prev, [sid]: Math.max(0, (prev[sid] || 0) - 1) }))
+      }
+    }
     if (filter === 'pending') setPendingCount(c => Math.max(0, c - 1))
     invalidate()
     setActing(null)
@@ -117,10 +135,12 @@ function Approvals({ invalidate }) {
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {assignments.map(a => {
-            const shift   = a.shifts
-            const profile = a.profile
-            const cfg     = statusCfg[a.status] || statusCfg.pending
+            const shift     = a.shifts
+            const profile   = a.profile
+            const cfg       = statusCfg[a.status] || statusCfg.pending
             const isPending = a.status === 'pending'
+            const shiftFull = shift?.max_volunteers > 0 &&
+              (confirmedMap[a.shift_id] || 0) >= shift.max_volunteers
 
             return (
               <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
@@ -136,9 +156,16 @@ function Approvals({ invalidate }) {
                 <div className="h-px bg-gray-100" />
                 {shift ? (
                   <div className="flex items-start justify-between gap-2">
-                    <span className={`shrink-0 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{cfg.label}
-                    </span>
+                    <div className="flex flex-col items-start gap-1 shrink-0">
+                      <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{cfg.label}
+                      </span>
+                      {shiftFull && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">
+                          מלאה
+                        </span>
+                      )}
+                    </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900 text-sm">{shift.title}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -151,15 +178,22 @@ function Approvals({ invalidate }) {
                   <p className="text-xs text-gray-400 text-right">המשמרת נמחקה</p>
                 )}
                 {isPending ? (
-                  <div className="flex gap-2 pt-0.5">
-                    <button onClick={() => decide(a.id, 'declined')} disabled={acting === a.id}
-                      className="flex-1 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-500 hover:bg-red-50 hover:border-red-100 hover:text-red-600 transition-all disabled:opacity-40 active:scale-95">
-                      דחייה ✗
-                    </button>
-                    <button onClick={() => decide(a.id, 'confirmed')} disabled={acting === a.id}
-                      className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all disabled:opacity-40 shadow-sm shadow-emerald-500/25 active:scale-95">
-                      {acting === a.id ? '...' : 'אישור ✓'}
-                    </button>
+                  <div className="flex flex-col gap-2 pt-0.5">
+                    {shiftFull && (
+                      <p className="text-[10px] text-red-500 text-center font-medium">
+                        המשמרת מלאה — לא ניתן לאשר
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button onClick={() => decide(a.id, 'declined')} disabled={acting === a.id}
+                        className="flex-1 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-500 hover:bg-red-50 hover:border-red-100 hover:text-red-600 transition-all disabled:opacity-40 active:scale-95">
+                        דחייה ✗
+                      </button>
+                      <button onClick={() => decide(a.id, 'confirmed')} disabled={acting === a.id || shiftFull}
+                        className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all disabled:opacity-40 shadow-sm shadow-emerald-500/25 active:scale-95">
+                        {acting === a.id ? '...' : 'אישור ✓'}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex justify-start">
