@@ -39,8 +39,9 @@ export default function MonthCalendar({ jumpToDate }) {
 
   async function load() {
     setLoading(true)
-    const from = isoDate(year, month, 1)
-    const to   = isoDate(year, month + 1, 0) + 'T23:59:59'
+    const from    = isoDate(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
     const [{ data: sh }, { data: bl }] = await Promise.all([
       supabase.from('shifts').select('id, title, start_time, end_time, status, shift_type, location')
