@@ -8,7 +8,7 @@ const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='24' height='24' viewB
 export default function Login() {
   const { user } = useAuth()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ email: '', password: '', full_name: '', phone: '' })
+  const [form, setForm] = useState({ email: '', password: '', full_name: '', phone: '', birth_date: '' })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState('')
@@ -37,10 +37,11 @@ export default function Login() {
 
         if (data.user) {
           await supabase.from('profiles').upsert({
-            id:        data.user.id,
-            full_name: form.full_name.trim(),
-            phone:     form.phone.trim() || null,
-            role:      'volunteer',
+            id:         data.user.id,
+            full_name:  form.full_name.trim(),
+            phone:      form.phone.trim() || null,
+            birth_date: form.birth_date || null,
+            role:       'volunteer',
           })
         }
 
@@ -143,6 +144,17 @@ export default function Login() {
                     onChange={e => set('phone', e.target.value)}
                     placeholder="050-000-0000"
                     className={inputCls + ' text-left'}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 text-right">תאריך לידה</label>
+                  <input
+                    type="date"
+                    required
+                    value={form.birth_date}
+                    onChange={e => set('birth_date', e.target.value)}
+                    max={new Date().toISOString().slice(0, 10)}
+                    className={inputCls}
                   />
                 </div>
               </>

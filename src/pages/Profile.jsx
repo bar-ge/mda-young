@@ -163,9 +163,10 @@ export default function Profile() {
       {/* Info rows */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {[
-          { label: 'אימייל', value: user?.email, dir: 'ltr' },
-          { label: 'טלפון',  value: profile.phone || '—' },
-          { label: 'תפקיד', value: roleLabels[roleKey] },
+          { label: 'אימייל',     value: user?.email, dir: 'ltr' },
+          { label: 'טלפון',      value: profile.phone || '—' },
+          { label: 'תאריך לידה', value: profile.birth_date ? new Date(profile.birth_date + 'T12:00:00').toLocaleDateString('he-IL') : '—' },
+          { label: 'תפקיד',      value: roleLabels[roleKey] },
         ].map((row, i, arr) => (
           <div key={i} className={`px-5 py-3.5 flex items-center justify-between ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
             <span className="text-xs text-gray-400">{row.label}</span>
