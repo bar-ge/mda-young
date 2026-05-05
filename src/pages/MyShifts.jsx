@@ -59,9 +59,9 @@ export default function MyShifts() {
     : []
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-5rem)]">
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:shrink-0">
         <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
           <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-amber-50 -translate-y-4 translate-x-4" />
           <span className="text-3xl font-black text-amber-500 relative">{pendingCount}</span>
@@ -75,7 +75,7 @@ export default function MyShifts() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 lg:shrink-0">
         {Object.entries(statusConfig).map(([key, cfg]) => (
           <span key={key} className="flex items-center gap-1.5 text-[10px] text-gray-400">
             <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
@@ -84,8 +84,8 @@ export default function MyShifts() {
         ))}
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
-        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start lg:pb-4">
+      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+        <div className="min-w-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -98,7 +98,7 @@ export default function MyShifts() {
           />
         </div>
 
-        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3">
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto">
           {!selected && (
             <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
               <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">

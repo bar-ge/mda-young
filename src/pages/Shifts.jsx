@@ -101,9 +101,9 @@ export default function Shifts() {
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-5rem)]">
       {/* Filter + legend row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between lg:shrink-0">
         <div className="flex gap-2">
           {[['open', 'פתוחות'], ['all', 'הכל']].map(([f, label]) => (
             <button key={f} onClick={() => { setFilter(f); setSelected(null); }}
@@ -128,8 +128,8 @@ export default function Shifts() {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
-        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start lg:pb-4">
+      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+        <div className="min-w-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -143,7 +143,7 @@ export default function Shifts() {
           />
         </div>
 
-        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3">
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto">
           {/* placeholder so the right column isn't empty when nothing is selected */}
           {!selected && (
             <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
