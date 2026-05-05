@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCalendar } from '../../contexts/CalendarContext'
 
 function formatDate(d) {
   return new Date(d + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -8,6 +9,7 @@ function formatDate(d) {
 
 export default function BlockedDates() {
   const { user } = useAuth()
+  const { invalidate } = useCalendar()
   const [blocked, setBlocked] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ date: '', reason: '' })
@@ -31,6 +33,7 @@ export default function BlockedDates() {
     setForm({ date: '', reason: '' })
     setShowForm(false)
     await load()
+    invalidate()
     setSaving(false)
   }
 
@@ -38,6 +41,7 @@ export default function BlockedDates() {
     if (!confirm('להסיר חסימה זו?')) return
     await supabase.from('blocked_dates').delete().eq('id', id)
     await load()
+    invalidate()
   }
 
   const now = new Date().toISOString().slice(0, 10)

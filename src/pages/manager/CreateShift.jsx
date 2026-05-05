@@ -74,6 +74,11 @@ export default function CreateShift({ onShiftCreated }) {
     setSaving(true)
     setSuccess('')
 
+    if (!isHoliday && new Date(form.end_time) <= new Date(form.start_time)) {
+      setSaving(false)
+      return
+    }
+
     const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,

@@ -26,6 +26,7 @@ export default function MyShifts() {
   const [selected,    setSelected]    = useState(null)
 
   useEffect(() => { load() }, [refreshKey])
+  useEffect(() => { setSelected(null) }, [year, month])
 
   async function load() {
     setLoading(true)
