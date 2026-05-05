@@ -24,7 +24,7 @@ const typeDot = {
   holiday: 'bg-gray-400',
 }
 
-export default function ShiftsList() {
+export default function ShiftsList({ typeFilter = null }) {
   const { year, month, refreshKey } = useCalendar()
   const [shifts,   setShifts]   = useState([])
   const [countMap, setCountMap] = useState({})
@@ -62,6 +62,7 @@ export default function ShiftsList() {
   const monthName = new Date(year, month, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
 
   const filtered = shifts.filter(s => {
+    if (typeFilter && s.shift_type !== typeFilter) return false
     if (filter === 'open')   return s.status !== 'cancelled'
     if (filter === 'closed') return s.status === 'cancelled'
     return true
@@ -70,7 +71,7 @@ export default function ShiftsList() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">{filtered.length} משמרות</span>
+        <span className="text-xs text-gray-400">{filtered.length} {typeFilter === 'event' ? 'אירועים' : 'משמרות'}</span>
         <span className="text-xs font-semibold text-gray-500">{monthName}</span>
       </div>
 
@@ -95,7 +96,7 @@ export default function ShiftsList() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-14 text-center">
           <span className="text-4xl">📅</span>
-          <p className="text-gray-400 text-sm">אין משמרות בחודש זה</p>
+          <p className="text-gray-400 text-sm">{typeFilter === 'event' ? 'אין אירועים בחודש זה' : 'אין משמרות בחודש זה'}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

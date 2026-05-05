@@ -405,19 +405,25 @@ export default function MonthCalendar({ jumpToDate }) {
 
                       {/* Times */}
                       {s.shift_type !== 'holiday' && (
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[10px] text-gray-400 mb-1 text-right">סיום</label>
-                            <input type="datetime-local" value={editForm.end_time}
-                              onChange={e => setEditForm(f => ({ ...f, end_time: e.target.value }))}
-                              className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] text-gray-400 mb-1 text-right">התחלה</label>
-                            <input type="datetime-local" value={editForm.start_time}
-                              onChange={e => setEditForm(f => ({ ...f, start_time: e.target.value }))}
-                              className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
-                          </div>
+                        <div className="flex flex-col gap-2">
+                          {[
+                            { label: 'התחלה', key: 'start_time' },
+                            { label: 'סיום',  key: 'end_time'   },
+                          ].map(({ label, key }) => (
+                            <div key={key}>
+                              <label className="block text-[10px] text-gray-400 mb-1 text-right">{label}</label>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <input type="date" lang="he-IL"
+                                  value={editForm[key]?.slice(0, 10) || ''}
+                                  onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value + 'T' + (f[key]?.slice(11) || '00:00') }))}
+                                  className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                                <input type="time" lang="he-IL"
+                                  value={editForm[key]?.slice(11, 16) || ''}
+                                  onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 10) || '') + 'T' + e.target.value }))}
+                                  className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
 

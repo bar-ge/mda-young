@@ -157,27 +157,33 @@ export default function CreateShift({ onShiftCreated }) {
         {isHoliday ? (
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">תאריך הסגירה *</label>
-            <input type="date" required value={form.start_time.slice(0, 10)}
+            <input type="date" lang="he-IL" required value={form.start_time.slice(0, 10)}
               onChange={e => {
                 set('start_time', e.target.value + 'T00:00')
-                set('end_time', e.target.value + 'T23:59')
+                set('end_time',   e.target.value + 'T23:59')
               }}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">סיום</label>
-              <input type="datetime-local" required value={form.end_time}
-                onChange={e => set('end_time', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">התחלה</label>
-              <input type="datetime-local" required value={form.start_time}
-                onChange={e => set('start_time', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
-            </div>
+          <div className="flex flex-col gap-3">
+            {[
+              { label: 'התחלה', key: 'start_time' },
+              { label: 'סיום',  key: 'end_time'   },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">{label}</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" lang="he-IL" required
+                    value={form[key].slice(0, 10)}
+                    onChange={e => set(key, e.target.value + 'T' + form[key].slice(11))}
+                    className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
+                  <input type="time" lang="he-IL" required
+                    value={form[key].slice(11, 16)}
+                    onChange={e => set(key, form[key].slice(0, 10) + 'T' + e.target.value)}
+                    className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

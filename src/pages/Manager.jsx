@@ -12,6 +12,7 @@ const tabs = [
   { id: 'dispatcher', label: 'אישורים',     icon: '✓'  },
   { id: 'shifts',     label: 'יצירת משמרת', icon: '➕' },
   { id: 'list',       label: 'משמרות',       icon: '📅' },
+  { id: 'events',     label: 'אירועים',      icon: '⭐' },
   { id: 'templates',  label: 'תבניות',       icon: '📋' },
   { id: 'branches',   label: 'סניפים',       icon: '🏥' },
   { id: 'blocked',    label: 'חסימות',       icon: '🔒' },
@@ -78,6 +79,7 @@ export default function Manager() {
             {tab === 'dispatcher' && <Dispatcher />}
             {tab === 'shifts'     && <CreateShift onShiftCreated={handleShiftCreated} />}
             {tab === 'list'       && <ShiftsList />}
+            {tab === 'events'     && <ShiftsList typeFilter="event" />}
             {tab === 'templates'  && <Templates />}
             {tab === 'branches'   && <Branches />}
             {tab === 'blocked'    && <BlockedDates />}
