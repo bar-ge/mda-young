@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useCalendar } from '../contexts/CalendarContext'
 import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
 function formatHour(ts) {
@@ -27,9 +28,7 @@ function shiftDot(shift) {
 
 export default function Shifts() {
   const { user } = useAuth()
-  const today = new Date()
-  const [year,  setYear]  = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
+  const { year, month, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
   const [shifts,        setShifts]        = useState([])
   const [blocked,       setBlocked]       = useState([])
   const [myAssignments, setMyAssignments] = useState({})
@@ -38,13 +37,13 @@ export default function Shifts() {
   const [selected, setSelected] = useState(null)
   const [acting,   setActing]   = useState(null)
 
-  useEffect(() => { load() }, [year, month])
+  useEffect(() => { load() }, [year, month, refreshKey])
 
   async function load() {
     setLoading(true)
-    const from     = isoDate(year, month, 1)
-    const lastDay  = new Date(year, month + 1, 0).getDate()
-    const to       = isoDate(year, month, lastDay) + 'T23:59:59'
+    const from    = isoDate(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
     const [{ data: sh }, { data: as }, { data: bl }] = await Promise.all([
       supabase.from('shifts').select('*')
@@ -64,26 +63,17 @@ export default function Shifts() {
     setLoading(false)
   }
 
-  function prevMonth() {
-    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
-    setSelected(null)
-  }
-  function nextMonth() {
-    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
-    setSelected(null)
-  }
-
   async function applyForShift(shiftId) {
     setActing(shiftId)
     await supabase.from('shift_assignments').insert({ shift_id: shiftId, user_id: user.id, status: 'pending' })
-    await load()
     setActing(null)
+    invalidate()
   }
   async function cancelAssignment(assignmentId, shiftId) {
     setActing(shiftId)
     await supabase.from('shift_assignments').delete().eq('id', assignmentId)
-    await load()
     setActing(null)
+    invalidate()
   }
 
   const now = new Date()
@@ -100,7 +90,7 @@ export default function Shifts() {
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           {[['open', 'פתוחות'], ['all', 'הכל']].map(([f, label]) => (
-            <button key={f} onClick={() => { setFilter(f); setSelected(null) }}
+            <button key={f} onClick={() => { setFilter(f); setSelected(null); }}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                 filter === f
                   ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25'
@@ -124,7 +114,8 @@ export default function Shifts() {
 
       <CalendarGrid
         year={year} month={month}
-        onPrev={prevMonth} onNext={nextMonth}
+        onPrev={() => { prevMonth(); setSelected(null) }}
+        onNext={() => { nextMonth(); setSelected(null) }}
         shifts={displayShifts}
         blocked={blocked}
         dotFn={shiftDot}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useCalendar } from '../contexts/CalendarContext'
 
 const DAYS_HEADER = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 
@@ -12,20 +13,16 @@ const typeStyle = {
 function isoDate(y, m, d) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
-
 function formatHour(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function MonthCalendar({ jumpToDate }) {
-  const today = new Date()
-  const [year,       setYear]       = useState(today.getFullYear())
-  const [month,      setMonth]      = useState(today.getMonth())
-  const [shifts,     setShifts]     = useState([])
-  const [blocked,    setBlocked]    = useState([])
-  const [selected,   setSelected]   = useState(null) // 'YYYY-MM-DD'
-  const [loading,    setLoading]    = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const { year, month, setYear, setMonth, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
+  const [shifts,   setShifts]   = useState([])
+  const [blocked,  setBlocked]  = useState([])
+  const [selected, setSelected] = useState(null)
+  const [loading,  setLoading]  = useState(true)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -37,7 +34,7 @@ export default function MonthCalendar({ jumpToDate }) {
     setYear(newYear)
     setMonth(newMonth)
     setSelected(jumpToDate)
-    if (newYear === year && newMonth === month) setRefreshKey(k => k + 1)
+    if (newYear === year && newMonth === month) invalidate()
   }, [jumpToDate])
 
   async function load() {
@@ -56,21 +53,10 @@ export default function MonthCalendar({ jumpToDate }) {
     setLoading(false)
   }
 
-  function prevMonth() {
-    if (month === 0) { setYear(y => y - 1); setMonth(11) }
-    else setMonth(m => m - 1)
-    setSelected(null)
-  }
-  function nextMonth() {
-    if (month === 11) { setYear(y => y + 1); setMonth(0) }
-    else setMonth(m => m + 1)
-    setSelected(null)
-  }
-
+  const today = new Date()
   const daysInMonth  = new Date(year, month + 1, 0).getDate()
-  const firstWeekday = new Date(year, month, 1).getDay() // 0=Sun
+  const firstWeekday = new Date(year, month, 1).getDay()
 
-  // Map date string -> shifts/blocked
   const shiftMap = {}
   shifts.forEach(s => {
     const d = s.start_time.slice(0, 10)
@@ -83,7 +69,6 @@ export default function MonthCalendar({ jumpToDate }) {
 
   const todayStr = isoDate(today.getFullYear(), today.getMonth(), today.getDate())
 
-  // Build grid cells
   const cells = []
   for (let i = 0; i < firstWeekday; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
@@ -91,20 +76,19 @@ export default function MonthCalendar({ jumpToDate }) {
   const selectedShifts  = selected ? (shiftMap[selected] || []) : []
   const selectedBlocked = selected ? blockedSet.has(selected) : false
   const selectedReason  = selected ? blockedMap[selected] : null
-
   const monthName = new Date(year, month, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
 
   return (
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button onClick={nextMonth} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+        <button onClick={() => { nextMonth(); setSelected(null) }} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <span className="font-semibold text-gray-900 text-sm">{monthName}</span>
-        <button onClick={prevMonth} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+        <button onClick={() => { prevMonth(); setSelected(null) }} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
@@ -127,14 +111,12 @@ export default function MonthCalendar({ jumpToDate }) {
 
       {/* Calendar grid */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Day headers */}
         <div className="grid grid-cols-7 border-b border-gray-100">
           {DAYS_HEADER.map(d => (
             <div key={d} className="py-2 text-center text-[10px] font-semibold text-gray-400">{d}</div>
           ))}
         </div>
 
-        {/* Day cells */}
         {loading ? (
           <div className="flex justify-center py-10">
             <div className="w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
@@ -148,7 +130,6 @@ export default function MonthCalendar({ jumpToDate }) {
               const isBlocked = blockedSet.has(dateStr)
               const isToday   = dateStr === todayStr
               const isSel     = selected === dateStr
-              const hasDots   = dayShifts.length > 0
 
               return (
                 <button
@@ -159,16 +140,14 @@ export default function MonthCalendar({ jumpToDate }) {
                   }`}
                 >
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
-                    isToday  ? 'bg-[#E30613] text-white' :
-                    isSel    ? 'bg-[#E30613]/15 text-[#E30613]' :
-                    isBlocked? 'text-gray-400' :
-                               'text-gray-700'
+                    isToday   ? 'bg-[#E30613] text-white' :
+                    isSel     ? 'bg-[#E30613]/15 text-[#E30613]' :
+                    isBlocked ? 'text-gray-400' :
+                                'text-gray-700'
                   }`}>
                     {isBlocked ? '🔒' : day}
                   </span>
-
-                  {/* Shift dots */}
-                  {hasDots && (
+                  {dayShifts.length > 0 && (
                     <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
                       {dayShifts.slice(0, 3).map((s, i) => (
                         <span key={i} className={`w-1.5 h-1.5 rounded-full ${typeStyle[s.shift_type]?.dot || 'bg-gray-400'}`} />

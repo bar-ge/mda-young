@@ -4,6 +4,7 @@ import Templates from './manager/Templates'
 import CreateShift from './manager/CreateShift'
 import BlockedDates from './manager/BlockedDates'
 import MonthCalendar from '../components/MonthCalendar'
+import { useCalendar } from '../contexts/CalendarContext'
 
 const tabs = [
   { id: 'shifts',    label: 'יצירת משמרת', icon: '➕' },
@@ -13,12 +14,17 @@ const tabs = [
 ]
 
 export default function Manager() {
+  const { setYear, setMonth, invalidate } = useCalendar()
   const [tab, setTab] = useState('shifts')
-  const [highlightDate, setHighlightDate] = useState(null)
+  const [jumpToDate, setJumpToDate] = useState(null)
   const calendarRef = useRef(null)
 
   function handleShiftCreated(dateStr) {
-    setHighlightDate(dateStr)
+    const d = new Date(dateStr + 'T12:00:00')
+    setYear(d.getFullYear())
+    setMonth(d.getMonth())
+    setJumpToDate(dateStr)
+    invalidate()
     setTimeout(() => {
       calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 300)
@@ -57,7 +63,7 @@ export default function Manager() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">לוח משמרות</p>
           <span className="w-8" />
         </div>
-        <MonthCalendar jumpToDate={highlightDate} />
+        <MonthCalendar jumpToDate={jumpToDate} />
       </div>
     </div>
   )

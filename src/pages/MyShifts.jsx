@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useCalendar } from '../contexts/CalendarContext'
 import CalendarGrid from '../components/CalendarGrid'
 
 function formatHour(ts) {
@@ -19,14 +20,12 @@ function assignmentDot(a) {
 
 export default function MyShifts() {
   const { user } = useAuth()
-  const today = new Date()
-  const [year,        setYear]        = useState(today.getFullYear())
-  const [month,       setMonth]       = useState(today.getMonth())
+  const { year, month, prevMonth, nextMonth, refreshKey } = useCalendar()
   const [assignments, setAssignments] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [selected,    setSelected]    = useState(null)
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [refreshKey])
 
   async function load() {
     setLoading(true)
@@ -37,15 +36,6 @@ export default function MyShifts() {
       .order('assigned_at', { ascending: false })
     if (data) setAssignments(data)
     setLoading(false)
-  }
-
-  function prevMonth() {
-    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
-    setSelected(null)
-  }
-  function nextMonth() {
-    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
-    setSelected(null)
   }
 
   // Stats use all assignments (not month-scoped)
@@ -95,7 +85,8 @@ export default function MyShifts() {
 
       <CalendarGrid
         year={year} month={month}
-        onPrev={prevMonth} onNext={nextMonth}
+        onPrev={() => { prevMonth(); setSelected(null) }}
+        onNext={() => { nextMonth(); setSelected(null) }}
         shifts={calShifts}
         dotFn={assignmentDot}
         loading={loading}

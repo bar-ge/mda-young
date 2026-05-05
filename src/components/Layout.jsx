@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { CalendarProvider } from '../contexts/CalendarContext'
 
 const volunteerNav = [
   {
@@ -67,6 +68,7 @@ export default function Layout() {
   const initials = profile?.full_name?.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
 
   return (
+    <CalendarProvider>
     <div className="flex flex-col min-h-svh bg-[#f0f2f5]">
       {/* Header */}
       <header className="glass sticky top-0 z-40 border-b border-gray-100/80 safe-top">
@@ -138,5 +140,6 @@ export default function Layout() {
         </div>
       </nav>
     </div>
+    </CalendarProvider>
   )
 }

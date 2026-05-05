@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCalendar } from '../../contexts/CalendarContext'
 
 function pad(n) { return String(n).padStart(2, '0') }
 function hourLabel(h) { return `${pad(h)}:00` }
@@ -181,14 +182,18 @@ async function runGenerate(templates, daysAhead, userId) {
   }
 
   if (toInsert.length > 0) {
-    const { error } = await supabase.from('shifts').insert(toInsert)
-    if (error) throw error
+    const BATCH = 500
+    for (let i = 0; i < toInsert.length; i += BATCH) {
+      const { error } = await supabase.from('shifts').insert(toInsert.slice(i, i + BATCH))
+      if (error) throw error
+    }
   }
   return toInsert.length
 }
 
 export default function Templates() {
   const { user } = useAuth()
+  const { invalidate } = useCalendar()
   const [templates, setTemplates] = useState([])
   const [branches, setBranches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -226,6 +231,7 @@ export default function Templates() {
     try {
       const count = await runGenerate(templates, daysAhead, user.id)
       setGenResult({ count, auto: false })
+      if (count > 0) invalidate()
     } catch (_) {
       setGenResult({ count: -1, auto: false })
     }
@@ -256,17 +262,16 @@ export default function Templates() {
   async function deleteTemplate(id) {
     if (!confirm('למחוק את התבנית וכל המשמרות שנוצרו ממנה?')) return
 
-    // Fetch shift IDs for this template
     const { data: shiftRows } = await supabase
       .from('shifts').select('id').eq('template_id', id)
     const shiftIds = (shiftRows || []).map(s => s.id)
 
-    // Delete assignments → shifts → template in order
     if (shiftIds.length > 0) {
       await supabase.from('shift_assignments').delete().in('shift_id', shiftIds)
       await supabase.from('shifts').delete().in('id', shiftIds)
     }
     await supabase.from('shift_templates').delete().eq('id', id)
+    invalidate()
     await load()
   }
 
@@ -290,8 +295,11 @@ export default function Templates() {
           >
             <option value={7}>שבוע קדימה</option>
             <option value={14}>שבועיים קדימה</option>
-            <option value={21}>3 שבועות קדימה</option>
             <option value={30}>חודש קדימה</option>
+            <option value={90}>3 חודשים קדימה</option>
+            <option value={180}>6 חודשים קדימה</option>
+            <option value={365}>שנה קדימה</option>
+            <option value={730}>לתמיד (שנתיים)</option>
           </select>
           <div className="text-right">
             <p className="text-xs font-bold text-gray-800">יצירה אוטומטית</p>
@@ -334,7 +342,7 @@ export default function Templates() {
         )}
 
         <p className="text-[10px] text-gray-400 text-right leading-relaxed">
-          רץ אוטומטית בפתיחת הדף לשבועיים קדימה · מדלג על משמרות קיימות
+          רץ אוטומטית בפתיחת הדף לשבועיים קדימה · מדלג על משמרות קיימות · לתמיד = שנתיים קדימה
         </p>
       </div>
 
