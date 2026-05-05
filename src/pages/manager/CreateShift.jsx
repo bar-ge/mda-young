@@ -177,10 +177,24 @@ export default function CreateShift({ onShiftCreated }) {
                     value={form[key].slice(0, 10)}
                     onChange={e => set(key, e.target.value + 'T' + form[key].slice(11))}
                     className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
-                  <input type="time" lang="he-IL" required
-                    value={form[key].slice(11, 16)}
-                    onChange={e => set(key, form[key].slice(0, 10) + 'T' + e.target.value)}
-                    className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
+                  {/* 24h time — two selects so AM/PM never appears */}
+                  <div className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/30 focus-within:border-[#E30613]">
+                    <select value={form[key].slice(11, 13)}
+                      onChange={e => set(key, form[key].slice(0, 11) + e.target.value + ':' + form[key].slice(14))}
+                      className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
+                      {Array.from({length:24},(_,i)=>String(i).padStart(2,'0')).map(h=>(
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                    <span className="text-gray-400 font-bold text-sm select-none">:</span>
+                    <select value={form[key].slice(14, 16)}
+                      onChange={e => set(key, form[key].slice(0, 14) + e.target.value)}
+                      className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
+                      {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>(
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             ))}

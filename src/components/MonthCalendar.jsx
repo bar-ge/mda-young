@@ -417,10 +417,23 @@ export default function MonthCalendar({ jumpToDate }) {
                                   value={editForm[key]?.slice(0, 10) || ''}
                                   onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value + 'T' + (f[key]?.slice(11) || '00:00') }))}
                                   className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
-                                <input type="time" lang="he-IL"
-                                  value={editForm[key]?.slice(11, 16) || ''}
-                                  onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 10) || '') + 'T' + e.target.value }))}
-                                  className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
+                                <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 px-1 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/25 focus-within:border-[#E30613]">
+                                  <select value={editForm[key]?.slice(11, 13) || '00'}
+                                    onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 11) || '') + e.target.value + ':' + (f[key]?.slice(14) || '00') }))}
+                                    className="flex-1 py-1.5 text-xs bg-transparent focus:outline-none text-center appearance-none">
+                                    {Array.from({length:24},(_,i)=>String(i).padStart(2,'0')).map(h=>(
+                                      <option key={h} value={h}>{h}</option>
+                                    ))}
+                                  </select>
+                                  <span className="text-gray-400 text-xs font-bold select-none">:</span>
+                                  <select value={editForm[key]?.slice(14, 16) || '00'}
+                                    onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 14) || '') + e.target.value }))}
+                                    className="flex-1 py-1.5 text-xs bg-transparent focus:outline-none text-center appearance-none">
+                                    {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>(
+                                      <option key={m} value={m}>{m}</option>
+                                    ))}
+                                  </select>
+                                </div>
                               </div>
                             </div>
                           ))}
