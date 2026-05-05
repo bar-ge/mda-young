@@ -144,7 +144,9 @@ export default function Shifts() {
         </div>
 
         {selected && (
-        <div className="min-w-0 mt-4 lg:mt-0 lg:pt-11 lg:w-[380px] lg:shrink-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 mt-4 lg:mt-0 lg:w-[380px] lg:shrink-0 lg:h-full lg:flex lg:flex-col">
+          <div className="hidden lg:block lg:h-11 lg:shrink-0" />
+          <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
 
       {/* Day detail panel */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
@@ -255,6 +257,7 @@ export default function Shifts() {
             })
           )}
         </div>
+          </div>
         </div>
         )}
       </div>

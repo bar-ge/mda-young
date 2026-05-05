@@ -100,7 +100,9 @@ export default function MyShifts() {
 
       {/* Day detail panel */}
       {selected && (
-        <div className="min-w-0 mt-4 lg:mt-0 lg:pt-11 lg:w-[380px] lg:shrink-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 mt-4 lg:mt-0 lg:w-[380px] lg:shrink-0 lg:h-full lg:flex lg:flex-col">
+          <div className="hidden lg:block lg:h-11 lg:shrink-0" />
+          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -166,6 +168,7 @@ export default function MyShifts() {
             })
           )}
         </div>
+          </div>
         </div>
         )}
       </div>
