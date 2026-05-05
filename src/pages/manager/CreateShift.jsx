@@ -20,6 +20,35 @@ function todayAt(hour) {
   return toLocalDatetimeValue(d)
 }
 
+const curYear = new Date().getFullYear()
+const YEARS   = [curYear, curYear + 1, curYear + 2]
+const MONTHS  = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+const DAYS    = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
+
+function DateSelects({ value, onChange }) {
+  const y = value.slice(0, 4)
+  const m = value.slice(5, 7)
+  const d = value.slice(8, 10)
+  return (
+    <div dir="ltr" className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/30 focus-within:border-[#E30613]">
+      <select value={d} onChange={e => onChange(`${y}-${m}-${e.target.value}`)}
+        className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
+        {DAYS.map(v => <option key={v} value={v}>{v}</option>)}
+      </select>
+      <span className="text-gray-400 font-bold text-sm select-none">/</span>
+      <select value={m} onChange={e => onChange(`${y}-${e.target.value}-${d}`)}
+        className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
+        {MONTHS.map(v => <option key={v} value={v}>{v}</option>)}
+      </select>
+      <span className="text-gray-400 font-bold text-sm select-none">/</span>
+      <select value={y} onChange={e => onChange(`${e.target.value}-${m}-${d}`)}
+        className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
+        {YEARS.map(v => <option key={v} value={String(v)}>{v}</option>)}
+      </select>
+    </div>
+  )
+}
+
 export default function CreateShift({ onShiftCreated }) {
   const { user } = useAuth()
   const [shiftType, setShiftType] = useState('regular')
@@ -98,7 +127,7 @@ export default function CreateShift({ onShiftCreated }) {
     if (!error) {
       setSuccess(shiftType === 'holiday' ? 'יום החג נסגר בהצלחה' : 'המשמרת נוצרה בהצלחה!')
       onShiftCreated?.(new Date(form.start_time).toISOString().slice(0, 10))
-      setForm({ title: '', description: '', location: '', start_time: todayAt(8), end_time: todayAt(14), max_volunteers: 1, branch_id: '', template_id: '' })
+      setForm({ title: '', description: '', location: '', start_time: todayAt(8), end_time: todayAt(14), max_volunteers: 1, branch_id: '', template_id: '', veteran_only: false })
       setTimeout(() => setSuccess(''), 4000)
     }
     setSaving(false)
@@ -157,12 +186,13 @@ export default function CreateShift({ onShiftCreated }) {
         {isHoliday ? (
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">תאריך הסגירה *</label>
-            <input type="date" lang="he-IL" required value={form.start_time.slice(0, 10)}
-              onChange={e => {
-                set('start_time', e.target.value + 'T00:00')
-                set('end_time',   e.target.value + 'T23:59')
+            <DateSelects
+              value={form.start_time.slice(0, 10)}
+              onChange={dateStr => {
+                set('start_time', dateStr + 'T00:00')
+                set('end_time',   dateStr + 'T23:59')
               }}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -173,10 +203,10 @@ export default function CreateShift({ onShiftCreated }) {
               <div key={key}>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">{label}</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <input type="date" lang="he-IL" required
+                  <DateSelects
                     value={form[key].slice(0, 10)}
-                    onChange={e => set(key, e.target.value + 'T' + form[key].slice(11))}
-                    className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
+                    onChange={dateStr => set(key, dateStr + 'T' + form[key].slice(11))}
+                  />
                   {/* 24h time — two selects so AM/PM never appears */}
                   <div dir="ltr" className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/30 focus-within:border-[#E30613]">
                     <select value={form[key].slice(11, 13)}

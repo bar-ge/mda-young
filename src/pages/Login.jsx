@@ -5,10 +5,20 @@ import { useAuth } from '../contexts/AuthContext'
 
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='1.2' fill='white' fill-opacity='0.12'/%3E%3C/svg%3E")`
 
+const BD_DAYS   = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
+const BD_MONTHS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+const BD_YEARS  = Array.from(
+  { length: new Date().getFullYear() - 1950 - 13 },
+  (_, i) => String(new Date().getFullYear() - 14 - i)
+)
+
 export default function Login() {
   const { user } = useAuth()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ email: '', password: '', full_name: '', phone: '', birth_date: '' })
+  const [form, setForm] = useState({
+    email: '', password: '', full_name: '', phone: '',
+    birth_day: '', birth_month: '', birth_year: '',
+  })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState('')
@@ -20,6 +30,17 @@ export default function Login() {
     setError('')
   }
 
+  // DDMMYYYY — used as the auto-generated signup password
+  const signupPassword =
+    form.birth_day && form.birth_month && form.birth_year
+      ? `${form.birth_day}${form.birth_month}${form.birth_year}`
+      : ''
+
+  const birthDateISO =
+    form.birth_day && form.birth_month && form.birth_year
+      ? `${form.birth_year}-${form.birth_month}-${form.birth_day}`
+      : ''
+
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
@@ -28,9 +49,15 @@ export default function Login() {
 
     try {
       if (mode === 'signup') {
+        if (!signupPassword) {
+          setError('נא למלא תאריך לידה')
+          setLoading(false)
+          return
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email: form.email,
-          password: form.password,
+          password: signupPassword,
           options: { data: { full_name: form.full_name, phone: form.phone } },
         })
         if (error) throw error
@@ -40,12 +67,12 @@ export default function Login() {
             id:         data.user.id,
             full_name:  form.full_name.trim(),
             phone:      form.phone.trim() || null,
-            birth_date: form.birth_date || null,
+            birth_date: birthDateISO || null,
             role:       'volunteer',
           })
         }
 
-        setSuccess('הרישום הושלם! ניתן להתחבר עם הסיסמה שהזנת.')
+        setSuccess('הרישום הושלם! ניתן להתחבר עם תאריך הלידה כסיסמה (DDMMYYYY).')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: form.email,
@@ -67,6 +94,7 @@ export default function Login() {
   }
 
   const inputCls = "w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all text-right"
+  const selectCls = "flex-1 py-3 text-sm bg-transparent focus:outline-none text-center appearance-none"
 
   return (
     <div
@@ -82,8 +110,8 @@ export default function Login() {
         <div className="relative">
           <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-black/30">
             <svg viewBox="0 0 48 48" fill="#E30613" className="w-10 h-10">
-              <rect x="18" y="2" width="12" height="44" rx="3"/>
-              <rect x="2" y="18" width="44" height="12" rx="3"/>
+              <polygon points="24,2 4.95,35 43.05,35"/>
+              <polygon points="24,46 4.95,13 43.05,13"/>
             </svg>
           </div>
           <div className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-white border-2 border-[#E30613] flex items-center justify-center">
@@ -146,16 +174,30 @@ export default function Login() {
                     className={inputCls + ' text-left'}
                   />
                 </div>
+
+                {/* Birth date — DD / MM / YYYY selects */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 text-right">תאריך לידה</label>
-                  <input
-                    type="date"
-                    required
-                    value={form.birth_date}
-                    onChange={e => set('birth_date', e.target.value)}
-                    max={new Date().toISOString().slice(0, 10)}
-                    className={inputCls}
-                  />
+                  <label className="text-xs font-semibold text-gray-500 text-right">תאריך לידה *</label>
+                  <div dir="ltr" className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#E30613]/25 focus-within:border-[#E30613] transition-all">
+                    <select value={form.birth_day} onChange={e => set('birth_day', e.target.value)}
+                      className={selectCls + ' text-gray-900'}>
+                      <option value="">DD</option>
+                      {BD_DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <span className="text-gray-300 font-bold text-sm select-none">/</span>
+                    <select value={form.birth_month} onChange={e => set('birth_month', e.target.value)}
+                      className={selectCls + ' text-gray-900'}>
+                      <option value="">MM</option>
+                      {BD_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <span className="text-gray-300 font-bold text-sm select-none">/</span>
+                    <select value={form.birth_year} onChange={e => set('birth_year', e.target.value)}
+                      className={selectCls + ' text-gray-900'}>
+                      <option value="">YYYY</option>
+                      {BD_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-gray-400 text-right">תאריך הלידה ישמש כסיסמה לכניסה (DDMMYYYY)</p>
                 </div>
               </>
             )}
@@ -174,20 +216,22 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-500 text-right">סיסמה</label>
-              <input
-                type="password"
-                required
-                dir="ltr"
-                value={form.password}
-                onChange={e => set('password', e.target.value)}
-                placeholder="DDMMYYYY"
-                className={inputCls + ' text-left tracking-widest'}
-              />
-              <p className="text-[10px] text-gray-400 text-right">הסיסמה היא תאריך הלידה בפורמט DDMMYYYY — לדוגמה: 15011990</p>
-            </div>
+            {/* Password — login only */}
+            {mode === 'login' && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-500 text-right">סיסמה</label>
+                <input
+                  type="password"
+                  required
+                  dir="ltr"
+                  value={form.password}
+                  onChange={e => set('password', e.target.value)}
+                  placeholder="DDMMYYYY"
+                  className={inputCls + ' text-left tracking-widest'}
+                />
+                <p className="text-[10px] text-gray-400 text-right">הסיסמה היא תאריך הלידה בפורמט DDMMYYYY</p>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-center justify-end gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">

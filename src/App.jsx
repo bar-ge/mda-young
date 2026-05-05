@@ -20,8 +20,8 @@ function Splash() {
       <div className="flex flex-col items-center gap-5">
         <div className="w-20 h-20 rounded-3xl bg-[#E30613] flex items-center justify-center shadow-xl shadow-red-500/30">
           <svg viewBox="0 0 48 48" fill="white" className="w-10 h-10">
-            <rect x="18" y="2" width="12" height="44" rx="3"/>
-            <rect x="2" y="18" width="44" height="12" rx="3"/>
+            <polygon points="24,2 4.95,35 43.05,35"/>
+            <polygon points="24,46 4.95,13 43.05,13"/>
           </svg>
         </div>
         <div className="flex flex-col items-center gap-1">

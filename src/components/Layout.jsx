@@ -83,8 +83,8 @@ export default function Layout() {
           <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 shrink-0">
             <div className="w-9 h-9 rounded-xl bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/40 shrink-0">
               <svg viewBox="0 0 20 20" fill="white" className="w-5 h-5">
-                <rect x="7" y="1" width="6" height="18" rx="1.5"/>
-                <rect x="1" y="7" width="18" height="6" rx="1.5"/>
+                <polygon points="10,1 2.2,14.5 17.8,14.5"/>
+                <polygon points="10,19 2.2,5.5 17.8,5.5"/>
               </svg>
             </div>
             <span className="font-bold text-gray-900 text-sm tracking-tight">מד״א צעירים</span>
@@ -156,8 +156,8 @@ export default function Layout() {
                 <span className="font-bold text-gray-900 text-sm tracking-tight">מד״א צעירים</span>
                 <div className="w-8 h-8 rounded-xl bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/40">
                   <svg viewBox="0 0 20 20" fill="white" className="w-4 h-4">
-                    <rect x="7" y="1" width="6" height="18" rx="1.5"/>
-                    <rect x="1" y="7" width="18" height="6" rx="1.5"/>
+                    <polygon points="10,1 2.2,14.5 17.8,14.5"/>
+                    <polygon points="10,19 2.2,5.5 17.8,5.5"/>
                   </svg>
                 </div>
               </div>

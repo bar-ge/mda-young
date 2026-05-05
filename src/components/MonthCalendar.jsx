@@ -40,8 +40,15 @@ export default function MonthCalendar({ jumpToDate }) {
   const [editingId,        setEditingId]        = useState(null)
   const [editForm,         setEditForm]         = useState({})
   const [saving,           setSaving]           = useState(false)
+  const [addingToShift,    setAddingToShift]    = useState(null)
+  const [addMode,          setAddMode]          = useState('system')
+  const [addText,          setAddText]          = useState('')
+  const [addUserId,        setAddUserId]        = useState('')
+  const [addingAssign,     setAddingAssign]     = useState(false)
+  const [allProfiles,      setAllProfiles]      = useState([])
 
   useEffect(() => { load() }, [year, month, refreshKey])
+  useEffect(() => { loadProfiles() }, [])
 
   useEffect(() => {
     if (!jumpToDate) return
@@ -172,6 +179,51 @@ export default function MonthCalendar({ jumpToDate }) {
     setBlocked(prev => prev.filter(b => b.date !== dateStr))
     invalidate()
     setClosing(false)
+  }
+
+  async function loadProfiles() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, phone')
+      .order('full_name')
+    if (data) setAllProfiles(data)
+  }
+
+  function openAddForm(shiftId) {
+    setAddingToShift(shiftId)
+    setAddMode('system')
+    setAddText('')
+    setAddUserId('')
+  }
+
+  async function addAssignment(shiftId) {
+    if (addMode === 'manual' && !addText.trim()) return
+    if (addMode === 'system' && !addUserId) return
+    setAddingAssign(true)
+
+    const payload = addMode === 'manual'
+      ? { shift_id: shiftId, manual_name: addText.trim(), status: 'confirmed' }
+      : { shift_id: shiftId, user_id: addUserId, status: 'confirmed' }
+
+    const { data } = await supabase.from('shift_assignments').insert(payload).select().single()
+
+    if (data) {
+      if (addMode === 'manual') {
+        setManualMap(prev => ({
+          ...prev,
+          [shiftId]: [...(prev[shiftId] || []), { id: data.id, manual_name: data.manual_name }],
+        }))
+      } else {
+        const profile = allProfiles.find(p => p.id === addUserId)
+        setConfirmedMap(prev => ({
+          ...prev,
+          [shiftId]: [...(prev[shiftId] || []), { id: data.id, name: profile?.full_name || 'מתנדב' }],
+        }))
+      }
+      invalidate()
+    }
+    setAddingToShift(null)
+    setAddingAssign(false)
   }
 
   function startEdit(s) {
@@ -562,6 +614,69 @@ export default function MonthCalendar({ jumpToDate }) {
                           </button>
                         </div>
                       </div>
+
+                      {/* ── Add volunteer ── */}
+                      {addingToShift === s.id ? (
+                        <div className="flex flex-col gap-2 pt-1 border-t border-gray-200 mt-1">
+                          {/* Mode toggle */}
+                          <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
+                            {[['system', 'מהמערכת'], ['manual', 'ידני']].map(([m, lbl]) => (
+                              <button key={m} type="button"
+                                onClick={() => { setAddMode(m); setAddText(''); setAddUserId('') }}
+                                className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all ${
+                                  addMode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                                }`}>
+                                {lbl}
+                              </button>
+                            ))}
+                          </div>
+
+                          {addMode === 'system' ? (
+                            <select
+                              value={addUserId}
+                              onChange={e => setAddUserId(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]"
+                            >
+                              <option value="">בחר מתנדב...</option>
+                              {allProfiles.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.full_name}{p.phone ? ` · ${p.phone}` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              value={addText}
+                              onChange={e => setAddText(e.target.value)}
+                              placeholder="שם המתנדב"
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]"
+                            />
+                          )}
+
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => setAddingToShift(null)}
+                              className="flex-1 py-1.5 text-[10px] font-bold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+                            >
+                              ביטול
+                            </button>
+                            <button
+                              onClick={() => addAssignment(s.id)}
+                              disabled={addingAssign || (addMode === 'manual' ? !addText.trim() : !addUserId)}
+                              className="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-[#E30613] text-white disabled:opacity-40 active:scale-[0.98] transition-all shadow-sm shadow-red-500/20"
+                            >
+                              {addingAssign ? '...' : 'הוסף ✓'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => openAddForm(s.id)}
+                          className="w-full py-1.5 text-[10px] font-bold rounded-lg border border-dashed border-gray-300 text-gray-400 hover:border-[#E30613]/40 hover:text-[#E30613] hover:bg-[#E30613]/3 transition-all"
+                        >
+                          + הוסף מתנדב
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
