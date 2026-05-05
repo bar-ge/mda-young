@@ -72,12 +72,12 @@ export default function Profile() {
   const roleKey = profile.role || 'volunteer'
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:h-[calc(100svh-5rem)] lg:overflow-y-auto scrollbar-hide">
+    <div className="flex flex-col gap-3 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden">
 
       {/* Avatar card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center gap-3 text-center">
-        <div className="w-20 h-20 rounded-full bg-[#E30613] flex items-center justify-center shadow-lg shadow-red-500/20">
-          <span className="text-white font-bold text-2xl">{initials}</span>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-center gap-2 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#E30613] flex items-center justify-center shadow-lg shadow-red-500/20">
+          <span className="text-white font-bold text-xl">{initials}</span>
         </div>
         <div className="flex flex-col gap-0.5">
           <h2 className="font-bold text-gray-900 text-lg leading-tight">{profile.full_name}</h2>
@@ -101,7 +101,7 @@ export default function Profile() {
 
       {/* Edit form */}
       {editing ? (
-        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
+        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <h3 className="font-semibold text-gray-900 text-sm text-right">עריכת פרופיל</h3>
 
           <div>
@@ -168,7 +168,7 @@ export default function Profile() {
           { label: 'תאריך לידה', value: profile.birth_date ? (() => { const d = new Date(profile.birth_date + 'T12:00:00'); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}` })() : '—' },
           { label: 'תפקיד',      value: roleLabels[roleKey] },
         ].map((row, i, arr) => (
-          <div key={i} className={`px-5 py-3.5 flex items-center justify-between ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
+          <div key={i} className={`px-4 py-2.5 flex items-center justify-between ${i < arr.length - 1 ? 'border-b border-gray-50' : ''}`}>
             <span className="text-xs text-gray-400">{row.label}</span>
             <span className="text-sm font-medium text-gray-700" dir={row.dir}>{row.value}</span>
           </div>
@@ -177,7 +177,7 @@ export default function Profile() {
 
       {/* Sign out */}
       <button onClick={signOut}
-        className="bg-white rounded-2xl border border-red-100 shadow-sm px-5 py-3.5 flex items-center justify-end gap-3 text-[#E30613] text-sm font-semibold active:bg-red-50 transition-colors">
+        className="bg-white rounded-2xl border border-red-100 shadow-sm px-4 py-3 flex items-center justify-end gap-3 text-[#E30613] text-sm font-semibold active:bg-red-50 transition-colors">
         התנתקות
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

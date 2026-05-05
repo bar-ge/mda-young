@@ -101,7 +101,7 @@ export default function Shifts() {
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-5rem)] lg:overflow-hidden">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden">
       {/* Filter + legend row */}
       <div className="flex items-center justify-between lg:shrink-0">
         <div className="flex gap-2">
@@ -129,7 +129,7 @@ export default function Shifts() {
       </div>
 
       <div className={`lg:gap-6 lg:flex-1 lg:min-h-0 ${selected ? 'lg:grid lg:grid-cols-[1fr,380px]' : 'lg:flex'}`}>
-        <div className="min-w-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 lg:h-full lg:overflow-hidden">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -144,7 +144,7 @@ export default function Shifts() {
         </div>
 
         {selected && (
-        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 mt-4 lg:mt-0 flex flex-col gap-3 lg:h-full lg:overflow-hidden">
 
       {/* Day detail panel */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">

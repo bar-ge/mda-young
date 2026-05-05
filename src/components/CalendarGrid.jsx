@@ -62,7 +62,7 @@ export default function CalendarGrid({
         ) : (
           <div className="grid grid-cols-7">
             {cells.map((day, idx) => {
-              if (!day) return <div key={`e${idx}`} className="min-h-[56px] border-b border-r border-gray-50 last:border-r-0" />
+              if (!day) return <div key={`e${idx}`} className="min-h-[46px] border-b border-r border-gray-50 last:border-r-0" />
               const dateStr  = isoDate(year, month, day)
               const dayShifts = shiftMap[dateStr] || []
               const isBlocked = blockedSet.has(dateStr)
@@ -73,7 +73,7 @@ export default function CalendarGrid({
                 <button
                   key={day}
                   onClick={() => onSelect(isSel ? null : dateStr)}
-                  className={`min-h-[56px] flex flex-col items-center justify-start pt-1.5 pb-1 gap-1 border-b border-r border-gray-50 last:border-r-0 transition-colors ${
+                  className={`min-h-[46px] flex flex-col items-center justify-start pt-1 pb-0.5 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-colors ${
                     isSel ? 'bg-[#E30613]/5' : 'hover:bg-gray-50'
                   }`}
                 >
