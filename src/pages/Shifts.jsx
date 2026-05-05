@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
-function formatDateTime(ts) {
-  return new Date(ts).toLocaleString('he-IL', {
-    weekday: 'short', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
+function formatHour(ts) {
+  return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 function formatDuration(start, end) {
   const h = (new Date(end) - new Date(start)) / 3600000
   return Number.isInteger(h) ? `${h} שע׳` : `${h.toFixed(1)} שע׳`
-}
-
-const typeConfig = {
-  regular: { label: null,    badge: null },
-  event:   { label: 'אירוע', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-  holiday: { label: 'סגור',  badge: 'bg-gray-100 text-gray-500 border-gray-200' },
 }
 
 const statusConfig = {
@@ -27,25 +19,40 @@ const statusConfig = {
   cancelled: { label: 'סגור',    bg: 'bg-gray-100',   text: 'text-gray-500',    border: 'border-gray-200',    dot: 'bg-gray-400' },
 }
 
+function shiftDot(shift) {
+  if (shift.shift_type === 'event')   return 'bg-amber-400'
+  if (shift.shift_type === 'holiday') return 'bg-gray-400'
+  return 'bg-[#E30613]'
+}
+
 export default function Shifts() {
   const { user } = useAuth()
-  const [shifts, setShifts] = useState([])
-  const [blocked, setBlocked] = useState([])
+  const today = new Date()
+  const [year,  setYear]  = useState(today.getFullYear())
+  const [month, setMonth] = useState(today.getMonth())
+  const [shifts,        setShifts]        = useState([])
+  const [blocked,       setBlocked]       = useState([])
   const [myAssignments, setMyAssignments] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('open')
-  const [acting, setActing] = useState(null)
+  const [loading,  setLoading]  = useState(true)
+  const [filter,   setFilter]   = useState('open')
+  const [selected, setSelected] = useState(null)
+  const [acting,   setActing]   = useState(null)
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [year, month])
 
   async function load() {
     setLoading(true)
+    const from     = isoDate(year, month, 1)
+    const lastDay  = new Date(year, month + 1, 0).getDate()
+    const to       = isoDate(year, month, lastDay) + 'T23:59:59'
+
     const [{ data: sh }, { data: as }, { data: bl }] = await Promise.all([
-      supabase.from('shifts').select('*').order('start_time'),
+      supabase.from('shifts').select('*')
+        .gte('start_time', from).lte('start_time', to)
+        .order('start_time'),
       supabase.from('shift_assignments').select('*').eq('user_id', user.id),
       supabase.from('blocked_dates').select('date, reason')
-        .gte('date', new Date().toISOString().slice(0, 10))
-        .order('date').limit(10),
+        .gte('date', from).lte('date', to.slice(0, 10)),
     ])
     if (sh) setShifts(sh)
     if (as) {
@@ -57,13 +64,21 @@ export default function Shifts() {
     setLoading(false)
   }
 
+  function prevMonth() {
+    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
+    setSelected(null)
+  }
+  function nextMonth() {
+    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
+    setSelected(null)
+  }
+
   async function applyForShift(shiftId) {
     setActing(shiftId)
     await supabase.from('shift_assignments').insert({ shift_id: shiftId, user_id: user.id, status: 'pending' })
     await load()
     setActing(null)
   }
-
   async function cancelAssignment(assignmentId, shiftId) {
     setActing(shiftId)
     await supabase.from('shift_assignments').delete().eq('id', assignmentId)
@@ -72,162 +87,157 @@ export default function Shifts() {
   }
 
   const now = new Date()
-  const assignableShifts = shifts.filter(s => s.shift_type !== 'holiday' && s.status !== 'cancelled')
-  const filtered = filter === 'all' ? assignableShifts : assignableShifts.filter(s => s.status === 'open')
-  const upcoming = filtered.filter(s => new Date(s.start_time) > now)
-  const past = filtered.filter(s => new Date(s.start_time) <= now)
-
-  function ShiftCard({ shift }) {
-    const assignment = myAssignments[shift.id]
-    const isPast = new Date(shift.start_time) <= now
-    const statusCfg = statusConfig[shift.status] || statusConfig.open
-    const typeCfg = typeConfig[shift.shift_type] || typeConfig.regular
-    const isEvent = shift.shift_type === 'event'
-
-    return (
-      <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
-        isEvent ? 'border-amber-100' : 'border-gray-100'
-      }`}>
-        {isEvent && <div className="h-0.5 bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300" />}
-
-        <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-col items-start gap-1.5 shrink-0">
-              <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                {statusCfg.label}
-              </span>
-              {typeCfg.label && (
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${typeCfg.badge}`}>
-                  {typeCfg.label}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 text-right">
-              <h3 className="font-bold text-gray-900 text-sm leading-snug">{shift.title}</h3>
-              {shift.description && (
-                <p className="text-gray-400 text-xs mt-0.5 line-clamp-2 leading-relaxed">{shift.description}</p>
-              )}
-            </div>
-            {isEvent && <span className="text-lg shrink-0">⭐</span>}
-          </div>
-
-          <div className="flex flex-col gap-1.5 border-t border-gray-50 pt-2.5">
-            <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
-              <span className="font-medium">{formatDateTime(shift.start_time)}</span>
-              <svg className="w-3.5 h-3.5 text-[#E30613] shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <div className="flex items-center justify-end gap-4 text-xs text-gray-400">
-              {shift.location && (
-                <span className="flex items-center gap-1.5">
-                  {shift.location}
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-                  </svg>
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                {formatDuration(shift.start_time, shift.end_time)}
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
-              </span>
-            </div>
-          </div>
-
-          {!isPast && shift.status === 'open' && (
-            assignment ? (
-              <div className="flex items-center justify-between pt-0.5">
-                {assignment.status === 'pending' && (
-                  <button onClick={() => cancelAssignment(assignment.id, shift.id)} disabled={acting === shift.id}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors font-medium">
-                    ביטול
-                  </button>
-                )}
-                <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                  assignment.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' :
-                  assignment.status === 'declined'  ? 'bg-red-50 text-red-600' :
-                  'bg-amber-50 text-amber-700'
-                }`}>
-                  {assignment.status === 'pending' ? '⏳ נרשמת' : assignment.status === 'confirmed' ? '✓ מאושר' : '✗ נדחה'}
-                </span>
-              </div>
-            ) : (
-              <button onClick={() => applyForShift(shift.id)} disabled={acting === shift.id}
-                className="w-full py-2.5 bg-[#E30613] text-white text-sm font-bold rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-red-500/25">
-                {acting === shift.id ? '...נרשם' : 'הרשמה למשמרת'}
-              </button>
-            )
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const upcomingBlocked = blocked.filter(b => b.date >= todayStr).slice(0, 3)
+  const displayShifts = shifts.filter(s =>
+    s.shift_type !== 'holiday' && s.status !== 'cancelled' &&
+    (filter === 'all' || s.status === 'open')
+  )
+  const selectedShifts  = selected ? displayShifts.filter(s => s.start_time.slice(0, 10) === selected) : []
+  const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
   return (
     <div className="flex flex-col gap-4 pt-3">
-      {upcomingBlocked.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {upcomingBlocked.map(b => (
-            <div key={b.date} className="flex items-center justify-end gap-2.5 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
-              <div className="text-right">
-                <p className="text-xs font-bold text-gray-600">
-                  {new Date(b.date + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{b.reason || 'יום סגור'}</p>
-              </div>
-              <span className="text-xl">🔒</span>
-            </div>
+      {/* Filter + legend row */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {[['open', 'פתוחות'], ['all', 'הכל']].map(([f, label]) => (
+            <button key={f} onClick={() => { setFilter(f); setSelected(null) }}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                filter === f
+                  ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25'
+                  : 'bg-white text-gray-500 border border-gray-200'
+              }`}>
+              {label}
+            </button>
           ))}
         </div>
-      )}
-
-      <div className="flex gap-2 justify-end">
-        {[['open', 'פתוחות'], ['all', 'הכל']].map(([f, label]) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-              filter === f
-                ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25'
-                : 'bg-white text-gray-500 border border-gray-200'
-            }`}>
-            {label}
-          </button>
-        ))}
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            אירוע
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-[#E30613]" />
+            משמרת
+          </span>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
+      <CalendarGrid
+        year={year} month={month}
+        onPrev={prevMonth} onNext={nextMonth}
+        shifts={displayShifts}
+        blocked={blocked}
+        dotFn={shiftDot}
+        loading={loading}
+        selected={selected}
+        onSelect={setSelected}
+      />
+
+      {/* Day detail panel */}
+      {selected && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span className="font-bold text-gray-900 text-sm text-right">
+              {new Date(selected + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
           </div>
-          <p className="text-gray-400 text-sm font-medium">אין משמרות זמינות כרגע</p>
+
+          {selectedBlocked && (
+            <div className="flex items-center justify-end gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+              <span className="text-sm text-gray-600 font-medium">{selectedBlocked.reason || 'יום חסום'}</span>
+              <span className="text-lg">🔒</span>
+            </div>
+          )}
+
+          {selectedShifts.length === 0 && !selectedBlocked ? (
+            <p className="text-gray-400 text-sm text-center py-3">אין משמרות ביום זה</p>
+          ) : (
+            selectedShifts.map(shift => {
+              const assignment = myAssignments[shift.id]
+              const isPast     = new Date(shift.start_time) <= now
+              const statusCfg  = statusConfig[shift.status] || statusConfig.open
+              const isEvent    = shift.shift_type === 'event'
+
+              return (
+                <div key={shift.id} className={`flex flex-col gap-3 rounded-2xl border p-3.5 ${
+                  isEvent ? 'border-amber-100 bg-amber-50/30' : 'border-gray-100 bg-gray-50/40'
+                }`}>
+                  {isEvent && (
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="text-xs font-bold text-amber-700">אירוע מיוחד</span>
+                      <span>⭐</span>
+                    </div>
+                  )}
+
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900 text-sm">{shift.title}</p>
+                    {shift.description && (
+                      <p className="text-gray-400 text-xs mt-0.5 line-clamp-2">{shift.description}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-4 text-xs text-gray-500">
+                    {shift.location && (
+                      <span className="flex items-center gap-1.5">
+                        {shift.location}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5">
+                      {formatHour(shift.start_time)} – {formatHour(shift.end_time)}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      {formatDuration(shift.start_time, shift.end_time)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                      {statusCfg.label}
+                    </span>
+
+                    {!isPast && shift.status === 'open' && (
+                      assignment ? (
+                        <div className="flex items-center gap-2">
+                          {assignment.status === 'pending' && (
+                            <button onClick={() => cancelAssignment(assignment.id, shift.id)} disabled={acting === shift.id}
+                              className="text-xs text-gray-400 hover:text-red-500 transition-colors font-medium">
+                              ביטול
+                            </button>
+                          )}
+                          <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
+                            assignment.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' :
+                            assignment.status === 'declined'  ? 'bg-red-50 text-red-600' :
+                            'bg-amber-50 text-amber-700'
+                          }`}>
+                            {assignment.status === 'pending'   ? '⏳ נרשמת' :
+                             assignment.status === 'confirmed' ? '✓ מאושר' : '✗ נדחה'}
+                          </span>
+                        </div>
+                      ) : (
+                        <button onClick={() => applyForShift(shift.id)} disabled={acting === shift.id}
+                          className="py-2 px-4 bg-[#E30613] text-white text-xs font-bold rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm shadow-red-500/25">
+                          {acting === shift.id ? '...' : 'הרשמה'}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
-      ) : (
-        <>
-          {upcoming.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">קרובות</p>
-              {upcoming.map(s => <ShiftCard key={s.id} shift={s} />)}
-            </div>
-          )}
-          {past.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">עבר</p>
-              {past.map(s => <ShiftCard key={s.id} shift={s} />)}
-            </div>
-          )}
-        </>
       )}
     </div>
   )

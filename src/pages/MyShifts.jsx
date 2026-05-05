@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import CalendarGrid from '../components/CalendarGrid'
 
-function formatDateTime(ts) {
-  return new Date(ts).toLocaleString('he-IL', {
-    weekday: 'short', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
+function formatHour(ts) {
+  return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 
 const statusConfig = {
-  pending:   { label: 'ממתין לאישור', bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
-  confirmed: { label: 'מאושר',        bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  declined:  { label: 'נדחה',         bg: 'bg-red-50',     text: 'text-red-600',     dot: 'bg-red-400' },
+  pending:   { label: 'ממתין לאישור', bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400',   border: 'border-amber-100'   },
+  confirmed: { label: 'מאושר',        bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-100' },
+  declined:  { label: 'נדחה',         bg: 'bg-red-50',     text: 'text-red-600',     dot: 'bg-red-400',     border: 'border-red-100'     },
+}
+
+function assignmentDot(a) {
+  return statusConfig[a.status]?.dot || 'bg-gray-400'
 }
 
 export default function MyShifts() {
   const { user } = useAuth()
+  const today = new Date()
+  const [year,        setYear]        = useState(today.getFullYear())
+  const [month,       setMonth]       = useState(today.getMonth())
   const [assignments, setAssignments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('upcoming')
+  const [loading,     setLoading]     = useState(true)
+  const [selected,    setSelected]    = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -34,13 +39,33 @@ export default function MyShifts() {
     setLoading(false)
   }
 
-  const now = new Date()
-  const upcoming = assignments.filter(a => a.shifts && new Date(a.shifts.start_time) > now)
-  const past = assignments.filter(a => a.shifts && new Date(a.shifts.start_time) <= now)
-  const shown = tab === 'upcoming' ? upcoming : past
+  function prevMonth() {
+    if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1)
+    setSelected(null)
+  }
+  function nextMonth() {
+    if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1)
+    setSelected(null)
+  }
 
+  // Stats use all assignments (not month-scoped)
+  const now = new Date()
+  const upcoming       = assignments.filter(a => a.shifts && new Date(a.shifts.start_time) > now)
   const confirmedCount = upcoming.filter(a => a.status === 'confirmed').length
-  const pendingCount = upcoming.filter(a => a.status === 'pending').length
+  const pendingCount   = upcoming.filter(a => a.status === 'pending').length
+
+  // Calendar shows only current month's assignments
+  const monthPrefix    = `${year}-${String(month + 1).padStart(2, '0')}`
+  const monthAssignments = assignments.filter(a => a.shifts?.start_time?.startsWith(monthPrefix))
+
+  // CalendarGrid expects objects with start_time at top level
+  const calShifts = monthAssignments
+    .filter(a => a.shifts)
+    .map(a => ({ ...a, start_time: a.shifts.start_time }))
+
+  const selectedAssignments = selected
+    ? monthAssignments.filter(a => a.shifts?.start_time?.slice(0, 10) === selected)
+    : []
 
   return (
     <div className="flex flex-col gap-4 pt-3">
@@ -58,93 +83,92 @@ export default function MyShifts() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 justify-end">
-        {[['upcoming', `קרובות (${upcoming.length})`], ['past', `עבר (${past.length})`]].map(([t, label]) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-              tab === t
-                ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25'
-                : 'bg-white text-gray-500 border border-gray-200'
-            }`}
-          >
-            {label}
-          </button>
+      {/* Legend */}
+      <div className="flex items-center justify-end gap-3">
+        {Object.entries(statusConfig).map(([key, cfg]) => (
+          <span key={key} className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+          </span>
         ))}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : shown.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
-            <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+      <CalendarGrid
+        year={year} month={month}
+        onPrev={prevMonth} onNext={nextMonth}
+        shifts={calShifts}
+        dotFn={assignmentDot}
+        loading={loading}
+        selected={selected}
+        onSelect={setSelected}
+      />
+
+      {/* Day detail panel */}
+      {selected && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span className="font-bold text-gray-900 text-sm text-right">
+              {new Date(selected + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
           </div>
-          <p className="text-gray-400 text-sm">
-            {tab === 'upcoming' ? 'אין משמרות קרובות.\nלך להירשם למשמרות!' : 'אין משמרות קודמות.'}
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {shown.map(a => {
-            const shift = a.shifts
-            if (!shift) return null
-            const cfg = statusConfig[a.status] || statusConfig.pending
-            const isPast = new Date(shift.start_time) <= now
 
-            return (
-              <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <span className={`shrink-0 flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    {cfg.label}
-                  </span>
-                  <div className="flex-1 text-right">
-                    <h3 className="font-semibold text-gray-900 text-sm">{shift.title}</h3>
-                    {shift.description && (
-                      <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{shift.description}</p>
+          {selectedAssignments.length === 0 ? (
+            <p className="text-gray-400 text-sm text-center py-3">אין משמרות ביום זה</p>
+          ) : (
+            selectedAssignments.map(a => {
+              const shift = a.shifts
+              const cfg   = statusConfig[a.status] || statusConfig.pending
+              const isFuture = new Date(shift.start_time) > now
+
+              return (
+                <div key={a.id} className={`flex flex-col gap-2.5 rounded-2xl border p-3.5 ${cfg.border} ${cfg.bg}/20`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className={`shrink-0 flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                      {cfg.label}
+                    </span>
+                    <div className="flex-1 text-right">
+                      <p className="font-bold text-gray-900 text-sm">{shift.title}</p>
+                      {shift.description && (
+                        <p className="text-gray-400 text-xs mt-0.5 line-clamp-2">{shift.description}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-4 text-xs text-gray-500">
+                    {shift.location && (
+                      <span className="flex items-center gap-1.5">
+                        {shift.location}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                      </span>
                     )}
+                    <span className="flex items-center gap-1.5">
+                      {formatHour(shift.start_time)} – {formatHour(shift.end_time)}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </span>
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
-                    <span>{formatDateTime(shift.start_time)}</span>
-                    <svg className="w-3.5 h-3.5 text-[#E30613]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <rect x="3" y="4" width="18" height="18" rx="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  </div>
-                  {shift.location && (
-                    <div className="flex items-center justify-end gap-2 text-xs text-gray-400">
-                      <span>{shift.location}</span>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
+                  {a.status === 'confirmed' && isFuture && (
+                    <div className="flex items-center justify-end gap-1.5 bg-emerald-50 rounded-xl px-3 py-2">
+                      <span className="text-xs text-emerald-700 font-medium">אתה מאושר למשמרת זו</span>
+                      <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     </div>
                   )}
                 </div>
-
-                {!isPast && a.status === 'confirmed' && (
-                  <div className="flex items-center gap-2 bg-emerald-50 rounded-xl p-3 justify-end">
-                    <span className="text-xs text-emerald-700 font-medium">אתה מאושר למשמרת זו</span>
-                    <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       )}
     </div>
