@@ -20,7 +20,7 @@ function todayAt(hour) {
   return toLocalDatetimeValue(d)
 }
 
-export default function CreateShift() {
+export default function CreateShift({ onShiftCreated }) {
   const { user } = useAuth()
   const [shiftType, setShiftType] = useState('regular')
   const [branches, setBranches] = useState([])
@@ -91,6 +91,7 @@ export default function CreateShift() {
     const { error } = await supabase.from('shifts').insert(payload)
     if (!error) {
       setSuccess(shiftType === 'holiday' ? 'יום החג נסגר בהצלחה' : 'המשמרת נוצרה בהצלחה!')
+      onShiftCreated?.(new Date(form.start_time).toISOString().slice(0, 10))
       setForm({ title: '', description: '', location: '', start_time: todayAt(8), end_time: todayAt(14), max_volunteers: 1, branch_id: '', template_id: '' })
       setTimeout(() => setSuccess(''), 4000)
     }

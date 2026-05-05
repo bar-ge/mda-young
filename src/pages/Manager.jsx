@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Branches from './manager/Branches'
 import Templates from './manager/Templates'
 import CreateShift from './manager/CreateShift'
@@ -14,6 +14,15 @@ const tabs = [
 
 export default function Manager() {
   const [tab, setTab] = useState('shifts')
+  const [highlightDate, setHighlightDate] = useState(null)
+  const calendarRef = useRef(null)
+
+  function handleShiftCreated(dateStr) {
+    setHighlightDate(dateStr)
+    setTimeout(() => {
+      calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 300)
+  }
 
   return (
     <div className="flex flex-col gap-5 pt-3">
@@ -36,19 +45,19 @@ export default function Manager() {
       </div>
 
       {/* Tab content */}
-      {tab === 'shifts'    && <CreateShift />}
+      {tab === 'shifts'    && <CreateShift onShiftCreated={handleShiftCreated} />}
       {tab === 'templates' && <Templates />}
       {tab === 'branches'  && <Branches />}
       {tab === 'blocked'   && <BlockedDates />}
 
       {/* Calendar — always visible at bottom */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" ref={calendarRef}>
         <div className="flex items-center justify-between">
           <span className="w-8" />
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">לוח משמרות</p>
           <span className="w-8" />
         </div>
-        <MonthCalendar />
+        <MonthCalendar jumpToDate={highlightDate} />
       </div>
     </div>
   )

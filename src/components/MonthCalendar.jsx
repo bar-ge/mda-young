@@ -17,16 +17,28 @@ function formatHour(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function MonthCalendar() {
+export default function MonthCalendar({ jumpToDate }) {
   const today = new Date()
-  const [year,  setYear]  = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
-  const [shifts,   setShifts]   = useState([])
-  const [blocked,  setBlocked]  = useState([])
-  const [selected, setSelected] = useState(null) // 'YYYY-MM-DD'
-  const [loading,  setLoading]  = useState(true)
+  const [year,       setYear]       = useState(today.getFullYear())
+  const [month,      setMonth]      = useState(today.getMonth())
+  const [shifts,     setShifts]     = useState([])
+  const [blocked,    setBlocked]    = useState([])
+  const [selected,   setSelected]   = useState(null) // 'YYYY-MM-DD'
+  const [loading,    setLoading]    = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => { load() }, [year, month])
+  useEffect(() => { load() }, [year, month, refreshKey])
+
+  useEffect(() => {
+    if (!jumpToDate) return
+    const d = new Date(jumpToDate + 'T12:00:00')
+    const newYear  = d.getFullYear()
+    const newMonth = d.getMonth()
+    setYear(newYear)
+    setMonth(newMonth)
+    setSelected(jumpToDate)
+    if (newYear === year && newMonth === month) setRefreshKey(k => k + 1)
+  }, [jumpToDate])
 
   async function load() {
     setLoading(true)
