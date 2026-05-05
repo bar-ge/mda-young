@@ -181,13 +181,14 @@ function Approvals({ invalidate }) {
 /* ─── Manual assignment sub-view ─── */
 function ManualAssignment({ invalidate }) {
   const { year, month } = useCalendar()
-  const [shifts,     setShifts]     = useState([])
-  const [manualMap,  setManualMap]  = useState({})
-  const [loading,    setLoading]    = useState(true)
-  const [expanded,   setExpanded]   = useState(null)
-  const [nameInput,  setNameInput]  = useState({})
-  const [adding,     setAdding]     = useState(null)
-  const [removing,   setRemoving]   = useState(null)
+  const [shifts,        setShifts]        = useState([])
+  const [manualMap,     setManualMap]     = useState({})
+  const [confirmedMap,  setConfirmedMap]  = useState({})
+  const [loading,       setLoading]       = useState(true)
+  const [expanded,      setExpanded]      = useState(null)
+  const [nameInput,     setNameInput]     = useState({})
+  const [adding,        setAdding]        = useState(null)
+  const [removing,      setRemoving]      = useState(null)
   const inputRefs = useRef({})
 
   useEffect(() => { load() }, [year, month])
@@ -198,19 +199,22 @@ function ManualAssignment({ invalidate }) {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: sh }, { data: ma }] = await Promise.all([
-      supabase.from('shifts')
-        .select('id, title, start_time, end_time, location, status, shift_type, veteran_only')
-        .gte('start_time', from).lte('start_time', to)
-        .neq('shift_type', 'holiday')
-        .neq('status', 'cancelled')
-        .order('start_time'),
-      supabase.from('shift_assignments')
-        .select('*')
-        .not('manual_name', 'is', null),
-    ])
+    const { data: sh } = await supabase.from('shifts')
+      .select('id, title, start_time, end_time, location, status, shift_type, veteran_only, max_volunteers')
+      .gte('start_time', from).lte('start_time', to)
+      .neq('shift_type', 'holiday')
+      .neq('status', 'cancelled')
+      .order('start_time')
+
+    const shiftIds = sh?.map(s => s.id) || []
+
+    const [{ data: ma }, { data: confirmed }] = shiftIds.length ? await Promise.all([
+      supabase.from('shift_assignments').select('*').not('manual_name', 'is', null).in('shift_id', shiftIds),
+      supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
+    ]) : [{ data: [] }, { data: [] }]
 
     if (sh) setShifts(sh)
+
     if (ma) {
       const map = {}
       ma.forEach(a => {
@@ -219,12 +223,21 @@ function ManualAssignment({ invalidate }) {
       })
       setManualMap(map)
     }
+
+    if (confirmed) {
+      const cmap = {}
+      confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+      setConfirmedMap(cmap)
+    }
+
     setLoading(false)
   }
 
   async function addManual(shiftId) {
-    const name = (nameInput[shiftId] || '').trim()
+    const name  = (nameInput[shiftId] || '').trim()
     if (!name) return
+    const shift = shifts.find(s => s.id === shiftId)
+    if (shift && (confirmedMap[shiftId] || 0) >= shift.max_volunteers) return
     setAdding(shiftId)
     const { data } = await supabase
       .from('shift_assignments')
@@ -233,6 +246,7 @@ function ManualAssignment({ invalidate }) {
       .single()
     if (data) {
       setManualMap(prev => ({ ...prev, [shiftId]: [...(prev[shiftId] || []), data] }))
+      setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || 0) + 1 }))
     }
     setNameInput(prev => ({ ...prev, [shiftId]: '' }))
     invalidate()
@@ -244,6 +258,7 @@ function ManualAssignment({ invalidate }) {
     setRemoving(assignmentId)
     await supabase.from('shift_assignments').delete().eq('id', assignmentId)
     setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+    setConfirmedMap(prev => ({ ...prev, [shiftId]: Math.max(0, (prev[shiftId] || 0) - 1) }))
     invalidate()
     setRemoving(null)
   }
@@ -269,8 +284,10 @@ function ManualAssignment({ invalidate }) {
       ) : (
         <div className="flex flex-col gap-2">
           {shifts.map(shift => {
-            const manuals   = manualMap[shift.id] || []
-            const isOpen    = expanded === shift.id
+            const manuals        = manualMap[shift.id] || []
+            const isOpen         = expanded === shift.id
+            const totalConfirmed = confirmedMap[shift.id] || 0
+            const isFull         = totalConfirmed >= shift.max_volunteers
 
             return (
               <div key={shift.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -280,11 +297,18 @@ function ManualAssignment({ invalidate }) {
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 text-right hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Manual count badge */}
-                    {manuals.length > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
-                        {manuals.length} משובצים
-                      </span>
+                    {/* Capacity badge */}
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      isFull
+                        ? 'bg-red-50 text-red-600 border-red-100'
+                        : totalConfirmed > 0
+                        ? 'bg-sky-50 text-sky-700 border-sky-100'
+                        : 'bg-gray-50 text-gray-400 border-gray-100'
+                    }`}>
+                      {totalConfirmed}/{shift.max_volunteers}
+                    </span>
+                    {isFull && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-100">מלא</span>
                     )}
                     {shift.veteran_only && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">🎖️</span>
@@ -331,24 +355,30 @@ function ManualAssignment({ invalidate }) {
                     )}
 
                     {/* Add new */}
-                    <div className="flex gap-2 items-center">
-                      <button
-                        onClick={() => addManual(shift.id)}
-                        disabled={adding === shift.id || !(nameInput[shift.id] || '').trim()}
-                        className="shrink-0 px-3.5 py-2 bg-[#E30613] text-white text-xs font-bold rounded-xl disabled:opacity-40 transition-all active:scale-95 shadow-sm shadow-red-500/20"
-                      >
-                        {adding === shift.id ? '...' : 'שבץ'}
-                      </button>
-                      <input
-                        ref={el => { inputRefs.current[shift.id] = el }}
-                        type="text"
-                        value={nameInput[shift.id] || ''}
-                        onChange={e => setNameInput(prev => ({ ...prev, [shift.id]: e.target.value }))}
-                        onKeyDown={e => e.key === 'Enter' && addManual(shift.id)}
-                        placeholder="שם המתנדב"
-                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-right bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all"
-                      />
-                    </div>
+                    {isFull ? (
+                      <div className="flex items-center justify-center gap-2 py-2 bg-red-50 rounded-xl">
+                        <span className="text-xs font-bold text-red-500">המשמרת מלאה ({shift.max_volunteers}/{shift.max_volunteers})</span>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 items-center">
+                        <button
+                          onClick={() => addManual(shift.id)}
+                          disabled={adding === shift.id || !(nameInput[shift.id] || '').trim()}
+                          className="shrink-0 px-3.5 py-2 bg-[#E30613] text-white text-xs font-bold rounded-xl disabled:opacity-40 transition-all active:scale-95 shadow-sm shadow-red-500/20"
+                        >
+                          {adding === shift.id ? '...' : 'שבץ'}
+                        </button>
+                        <input
+                          ref={el => { inputRefs.current[shift.id] = el }}
+                          type="text"
+                          value={nameInput[shift.id] || ''}
+                          onChange={e => setNameInput(prev => ({ ...prev, [shift.id]: e.target.value }))}
+                          onKeyDown={e => e.key === 'Enter' && addManual(shift.id)}
+                          placeholder={`שם המתנדב (נותרו ${shift.max_volunteers - totalConfirmed} מקומות)`}
+                          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm text-right bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
