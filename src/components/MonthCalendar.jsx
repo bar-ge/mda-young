@@ -23,6 +23,7 @@ export default function MonthCalendar({ jumpToDate }) {
   const [blocked,  setBlocked]  = useState([])
   const [selected, setSelected] = useState(null)
   const [loading,  setLoading]  = useState(true)
+  const [deleting, setDeleting] = useState(null)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -52,6 +53,16 @@ export default function MonthCalendar({ jumpToDate }) {
     if (sh) setShifts(sh)
     if (bl) setBlocked(bl)
     setLoading(false)
+  }
+
+  async function deleteShift(shiftId) {
+    if (!confirm('למחוק משמרת זו? הפעולה תמחק גם את כל ההרשמות אליה.')) return
+    setDeleting(shiftId)
+    await supabase.from('shift_assignments').delete().eq('shift_id', shiftId)
+    await supabase.from('shifts').delete().eq('id', shiftId)
+    setShifts(prev => prev.filter(s => s.id !== shiftId))
+    invalidate()
+    setDeleting(null)
   }
 
   const today = new Date()
@@ -192,20 +203,35 @@ export default function MonthCalendar({ jumpToDate }) {
             selectedShifts.map(s => {
               const style = typeStyle[s.shift_type] || typeStyle.regular
               return (
-                <div key={s.id} className={`flex items-start justify-between gap-2 bg-gray-50 rounded-xl px-3 py-2.5 ring-1 ${style.ring}`}>
-                  <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${style.dot}`} />
-                  <div className="flex-1 text-right">
-                    <p className="font-semibold text-gray-900 text-sm">{s.title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {formatHour(s.start_time)} – {formatHour(s.end_time)}
-                      {s.location && ` · ${s.location}`}
-                    </p>
+                <div key={s.id} className={`flex flex-col gap-2 bg-gray-50 rounded-xl px-3 py-2.5 ring-1 ${style.ring}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      onClick={() => deleteShift(s.id)}
+                      disabled={deleting === s.id}
+                      className="shrink-0 w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
+                      title="מחק משמרת"
+                    >
+                      {deleting === s.id ? (
+                        <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      )}
+                    </button>
+                    <div className="flex-1 text-right">
+                      <p className="font-semibold text-gray-900 text-sm">{s.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {formatHour(s.start_time)} – {formatHour(s.end_time)}
+                        {s.location && ` · ${s.location}`}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      s.status === 'open'      ? 'bg-emerald-50 text-emerald-700' :
+                      s.status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
+                                                 'bg-amber-50 text-amber-700'
+                    }`}>{style.label}</span>
                   </div>
-                  <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    s.status === 'open'      ? 'bg-emerald-50 text-emerald-700' :
-                    s.status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
-                                               'bg-amber-50 text-amber-700'
-                  }`}>{style.label}</span>
                 </div>
               )
             })
