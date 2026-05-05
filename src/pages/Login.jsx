@@ -5,17 +5,10 @@ import { useAuth } from '../contexts/AuthContext'
 
 const DOT_PATTERN = `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='1.2' fill='white' fill-opacity='0.12'/%3E%3C/svg%3E")`
 
-function dobToPassword(dob) {
-  // dob is YYYY-MM-DD → password is DDMMYYYY
-  if (!dob) return ''
-  const [y, m, d] = dob.split('-')
-  return `${d}${m}${y}`
-}
-
 export default function Login() {
   const { user } = useAuth()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ email: '', dob: '', full_name: '', phone: '' })
+  const [form, setForm] = useState({ email: '', password: '', full_name: '', phone: '' })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState('')
@@ -33,23 +26,15 @@ export default function Login() {
     setError('')
     setSuccess('')
 
-    const password = dobToPassword(form.dob)
-    if (password.length < 8) {
-      setError('תאריך לידה לא תקין')
-      setLoading(false)
-      return
-    }
-
     try {
       if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email: form.email,
-          password,
+          password: form.password,
           options: { data: { full_name: form.full_name, phone: form.phone } },
         })
         if (error) throw error
 
-        // Save phone to profile immediately (user record exists even before email confirm)
         if (data.user) {
           await supabase.from('profiles').upsert({
             id:        data.user.id,
@@ -59,18 +44,18 @@ export default function Login() {
           })
         }
 
-        setSuccess('הרישום הושלם! ניתן להתחבר עם תאריך הלידה שלך.')
+        setSuccess('הרישום הושלם! ניתן להתחבר עם הסיסמה שהזנת.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: form.email,
-          password,
+          password: form.password,
         })
         if (error) throw error
       }
     } catch (err) {
       setError(
         err.message === 'Invalid login credentials'
-          ? 'אימייל או תאריך לידה שגויים'
+          ? 'אימייל או סיסמה שגויים'
           : err.message === 'User already registered'
           ? 'האימייל כבר רשום. נסה להתחבר.'
           : 'שגיאה: ' + err.message
@@ -177,18 +162,19 @@ export default function Login() {
               />
             </div>
 
-            {/* Date of birth (used as password) */}
+            {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-500 text-right">תאריך לידה</label>
+              <label className="text-xs font-semibold text-gray-500 text-right">סיסמה</label>
               <input
-                type="date"
+                type="password"
                 required
-                value={form.dob}
-                onChange={e => set('dob', e.target.value)}
-                max={new Date().toISOString().slice(0, 10)}
-                className={inputCls}
+                dir="ltr"
+                value={form.password}
+                onChange={e => set('password', e.target.value)}
+                placeholder="DDMMYYYY"
+                className={inputCls + ' text-left tracking-widest'}
               />
-              <p className="text-[10px] text-gray-400 text-right">תאריך הלידה משמש כסיסמה לכניסה למערכת</p>
+              <p className="text-[10px] text-gray-400 text-right">הסיסמה היא תאריך הלידה בפורמט DDMMYYYY — לדוגמה: 15011990</p>
             </div>
 
             {error && (
