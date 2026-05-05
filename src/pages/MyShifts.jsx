@@ -84,8 +84,8 @@ export default function MyShifts() {
         ))}
       </div>
 
-      <div className={`lg:gap-6 lg:flex-1 lg:min-h-0 ${selected ? 'lg:grid lg:grid-cols-[1fr,380px]' : 'lg:flex'}`}>
-        <div className="flex-1 min-w-0 lg:h-full lg:overflow-hidden">
+      <div className="lg:flex lg:gap-6 lg:flex-1 lg:min-h-0">
+        <div className={`min-w-0 lg:h-full lg:overflow-hidden ${selected ? 'lg:flex-1' : 'lg:w-full'}`}>
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}
@@ -100,7 +100,7 @@ export default function MyShifts() {
 
       {/* Day detail panel */}
       {selected && (
-        <div className="min-w-0 mt-4 lg:mt-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
+        <div className="min-w-0 mt-4 lg:mt-0 lg:w-[380px] lg:shrink-0 lg:h-full lg:overflow-y-auto scrollbar-hide">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
