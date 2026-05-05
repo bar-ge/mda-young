@@ -178,7 +178,7 @@ export default function CreateShift({ onShiftCreated }) {
                     onChange={e => set(key, e.target.value + 'T' + form[key].slice(11))}
                     className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
                   {/* 24h time — two selects so AM/PM never appears */}
-                  <div className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/30 focus-within:border-[#E30613]">
+                  <div dir="ltr" className="flex items-center gap-1 rounded-xl border border-gray-200 px-2 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/30 focus-within:border-[#E30613]">
                     <select value={form[key].slice(11, 13)}
                       onChange={e => set(key, form[key].slice(0, 11) + e.target.value + ':' + form[key].slice(14))}
                       className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none text-center appearance-none">
