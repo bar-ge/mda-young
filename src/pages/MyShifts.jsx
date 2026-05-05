@@ -85,7 +85,7 @@ export default function MyShifts() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
-        <div className="lg:sticky lg:top-20">
+        <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-4">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}

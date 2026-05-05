@@ -36,7 +36,7 @@ export default function Manager() {
       <div className="lg:grid lg:grid-cols-[1fr,420px] lg:gap-6 lg:items-start">
 
         {/* Left col on desktop / top on mobile: calendar */}
-        <div className="lg:sticky lg:top-20">
+        <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pb-4">
           <MonthCalendar jumpToDate={jumpToDate} />
         </div>
 
