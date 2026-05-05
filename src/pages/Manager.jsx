@@ -30,48 +30,58 @@ export default function Manager() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pt-3">
+    <div className="pt-3 lg:pt-0">
 
-      {/* Calendar — always at the top */}
-      <MonthCalendar jumpToDate={jumpToDate} />
+      {/* ── Desktop: side-by-side ── */}
+      <div className="lg:grid lg:grid-cols-[1fr,420px] lg:gap-6 lg:items-start">
 
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">פעולות</span>
-        <div className="flex-1 h-px bg-gray-200" />
+        {/* Left col on desktop / top on mobile: calendar */}
+        <div className="lg:sticky lg:top-20">
+          <MonthCalendar jumpToDate={jumpToDate} />
+        </div>
+
+        {/* Right col on desktop / below on mobile: tabs + content */}
+        <div className="flex flex-col gap-4 mt-4 lg:mt-0">
+
+          {/* Divider (mobile only) */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">פעולות</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Sub-tabs */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setTab(t.id)
+                  setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+                }}
+                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  tab === t.id
+                    ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
+                    : 'bg-white text-gray-500 border border-gray-200'
+                }`}
+              >
+                <span>{t.icon}</span>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div ref={formRef}>
+            {tab === 'dispatcher' && <Dispatcher />}
+            {tab === 'shifts'     && <CreateShift onShiftCreated={handleShiftCreated} />}
+            {tab === 'templates'  && <Templates />}
+            {tab === 'branches'   && <Branches />}
+            {tab === 'blocked'    && <BlockedDates />}
+          </div>
+
+        </div>
       </div>
-
-      {/* Sub-tabs */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setTab(t.id)
-              setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-            }}
-            className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
-              tab === t.id
-                ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
-                : 'bg-white text-gray-500 border border-gray-200'
-            }`}
-          >
-            <span>{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      <div ref={formRef}>
-        {tab === 'dispatcher' && <Dispatcher />}
-        {tab === 'shifts'     && <CreateShift onShiftCreated={handleShiftCreated} />}
-        {tab === 'templates'  && <Templates />}
-        {tab === 'branches'   && <Branches />}
-        {tab === 'blocked'    && <BlockedDates />}
-      </div>
-
     </div>
   )
 }

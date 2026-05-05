@@ -136,7 +136,7 @@ export default function Dispatcher() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {assignments.map(a => {
             const shift   = a.shifts
             const profile = a.profile

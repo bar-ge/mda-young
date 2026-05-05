@@ -59,7 +59,7 @@ export default function MyShifts() {
     : []
 
   return (
-    <div className="flex flex-col gap-4 pt-3">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
@@ -84,16 +84,29 @@ export default function MyShifts() {
         ))}
       </div>
 
-      <CalendarGrid
-        year={year} month={month}
-        onPrev={() => { prevMonth(); setSelected(null) }}
-        onNext={() => { nextMonth(); setSelected(null) }}
-        shifts={calShifts}
-        dotFn={assignmentDot}
-        loading={loading}
-        selected={selected}
-        onSelect={setSelected}
-      />
+      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
+        <div className="lg:sticky lg:top-20">
+          <CalendarGrid
+            year={year} month={month}
+            onPrev={() => { prevMonth(); setSelected(null) }}
+            onNext={() => { nextMonth(); setSelected(null) }}
+            shifts={calShifts}
+            dotFn={assignmentDot}
+            loading={loading}
+            selected={selected}
+            onSelect={setSelected}
+          />
+        </div>
+
+        <div className="mt-4 lg:mt-0 flex flex-col gap-3">
+          {!selected && (
+            <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
+              <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              <p className="text-sm">בחר יום לצפייה בהרשמות שלך</p>
+            </div>
+          )}
 
       {/* Day detail panel */}
       {selected && (
@@ -163,6 +176,8 @@ export default function MyShifts() {
           )}
         </div>
       )}
+        </div>{/* right column */}
+      </div>{/* desktop grid */}
     </div>
   )
 }

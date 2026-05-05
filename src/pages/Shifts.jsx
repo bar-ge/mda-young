@@ -85,7 +85,7 @@ export default function Shifts() {
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
   return (
-    <div className="flex flex-col gap-4 pt-3">
+    <div className="flex flex-col gap-4 pt-3 lg:pt-0">
       {/* Filter + legend row */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
@@ -112,17 +112,32 @@ export default function Shifts() {
         </div>
       </div>
 
-      <CalendarGrid
-        year={year} month={month}
-        onPrev={() => { prevMonth(); setSelected(null) }}
-        onNext={() => { nextMonth(); setSelected(null) }}
-        shifts={displayShifts}
-        blocked={blocked}
-        dotFn={shiftDot}
-        loading={loading}
-        selected={selected}
-        onSelect={setSelected}
-      />
+      <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-6 lg:items-start">
+        <div className="lg:sticky lg:top-20">
+          <CalendarGrid
+            year={year} month={month}
+            onPrev={() => { prevMonth(); setSelected(null) }}
+            onNext={() => { nextMonth(); setSelected(null) }}
+            shifts={displayShifts}
+            blocked={blocked}
+            dotFn={shiftDot}
+            loading={loading}
+            selected={selected}
+            onSelect={setSelected}
+          />
+        </div>
+
+        <div className="mt-4 lg:mt-0 flex flex-col gap-3">
+          {/* placeholder so the right column isn't empty when nothing is selected */}
+          {!selected && (
+            <div className="hidden lg:flex flex-col items-center justify-center gap-2 py-20 text-center text-gray-300">
+              <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/>
+              </svg>
+              <p className="text-sm">בחר יום לצפייה במשמרות</p>
+            </div>
+          )}
 
       {/* Day detail panel */}
       {selected && (
@@ -230,6 +245,8 @@ export default function Shifts() {
           )}
         </div>
       )}
+        </div>{/* right column */}
+      </div>{/* desktop grid */}
     </div>
   )
 }
