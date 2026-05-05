@@ -31,9 +31,9 @@ export default function CalendarGrid({
   const monthName = new Date(year, month, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className="w-full h-full flex flex-col gap-3">
       {/* Month navigation */}
-      <div className="flex items-center justify-between">
+      <div className="shrink-0 flex items-center justify-between">
         <button onClick={onNext} disabled={loading} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -47,22 +47,22 @@ export default function CalendarGrid({
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-gray-100">
+      {/* Grid — flex-1 so it fills all remaining height */}
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="shrink-0 grid grid-cols-7 border-b border-gray-100">
           {DAYS.map(d => (
             <div key={d} className="py-2 text-center text-[10px] font-semibold text-gray-400">{d}</div>
           ))}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-10">
+          <div className="flex-1 flex justify-center items-center">
             <div className="w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-7">
+          <div className="flex-1 grid grid-cols-7" style={{ gridAutoRows: 'minmax(0, 1fr)' }}>
             {cells.map((day, idx) => {
-              if (!day) return <div key={`e${idx}`} className="min-h-[46px] border-b border-r border-gray-50 last:border-r-0" />
+              if (!day) return <div key={`e${idx}`} className="border-b border-r border-gray-50 last:border-r-0" />
               const dateStr  = isoDate(year, month, day)
               const dayShifts = shiftMap[dateStr] || []
               const isBlocked = blockedSet.has(dateStr)
@@ -73,7 +73,7 @@ export default function CalendarGrid({
                 <button
                   key={day}
                   onClick={() => onSelect(isSel ? null : dateStr)}
-                  className={`min-h-[46px] flex flex-col items-center justify-start pt-1 pb-0.5 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-colors ${
+                  className={`flex flex-col items-center justify-start pt-1.5 pb-1 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-colors ${
                     isSel ? 'bg-[#E30613]/5' : 'hover:bg-gray-50'
                   }`}
                 >
