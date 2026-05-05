@@ -129,7 +129,7 @@ export default function Shifts() {
       </div>
 
       <div className={`lg:gap-6 lg:flex-1 lg:min-h-0 ${selected ? 'lg:grid lg:grid-cols-[1fr,380px]' : 'lg:flex'}`}>
-        <div className="min-w-0 lg:h-full lg:overflow-hidden">
+        <div className="flex-1 min-w-0 lg:h-full lg:overflow-hidden">
           <CalendarGrid
             year={year} month={month}
             onPrev={() => { prevMonth(); setSelected(null) }}

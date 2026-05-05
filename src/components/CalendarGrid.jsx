@@ -31,7 +31,7 @@ export default function CalendarGrid({
   const monthName = new Date(year, month, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="w-full flex flex-col gap-3">
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <button onClick={onNext} disabled={loading} className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
