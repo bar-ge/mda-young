@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>אימות אימייל – MDA Young</title>
+</head>
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;direction:rtl;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+          <!-- Header / Logo -->
+          <tr>
+            <td style="padding-bottom:24px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" style="display:inline-table;">
+                <tr>
+                  <td style="background:#E30613;border-radius:20px;padding:14px 28px;">
+                    <span style="color:white;font-size:22px;font-weight:900;letter-spacing:1px;">MDA Young</span>
+                    <span style="color:rgba(255,255,255,0.7);font-size:13px;margin-right:8px;">מגן דוד אדום</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:white;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+              <!-- Red top bar -->
+              <div style="background:linear-gradient(135deg,#E30613 0%,#a50010 100%);height:6px;"></div>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 36px;">
+
+                <!-- Icon -->
+                <tr>
+                  <td style="padding-bottom:24px;text-align:center;">
+                    <div style="display:inline-block;background:#fff5f5;border-radius:50%;width:72px;height:72px;line-height:72px;font-size:36px;text-align:center;">
+                      ✉️
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                  <td style="padding-bottom:8px;text-align:center;">
+                    <h1 style="margin:0;font-size:22px;font-weight:800;color:#111827;">אמת את כתובת האימייל שלך</h1>
+                  </td>
+                </tr>
+
+                <!-- Sub -->
+                <tr>
+                  <td style="padding-bottom:32px;text-align:center;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.6;">
+                      לחץ על הכפתור למטה כדי לאמת את האימייל שלך<br>
+                      ולהשלים את ההרשמה ל-MDA Young
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- CTA Button -->
+                <tr>
+                  <td style="padding-bottom:32px;text-align:center;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;background:linear-gradient(135deg,#E30613,#a50010);color:white;text-decoration:none;font-size:15px;font-weight:700;padding:16px 40px;border-radius:14px;box-shadow:0 4px 16px rgba(227,6,19,0.35);">
+                      אמת אימייל →
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <div style="border-top:1px solid #f3f4f6;"></div>
+                  </td>
+                </tr>
+
+                <!-- Fallback link -->
+                <tr>
+                  <td style="padding-bottom:8px;text-align:center;">
+                    <p style="margin:0;font-size:12px;color:#9ca3af;">
+                      אם הכפתור לא עובד, העתק את הקישור הבא לדפדפן:
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="text-align:center;">
+                    <p style="margin:0;font-size:11px;color:#E30613;word-break:break-all;direction:ltr;">
+                      {{ .ConfirmationURL }}
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:24px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.8;">
+                קיבלת אימייל זה כי נרשמת ל-MDA Young<br>
+                אם לא ביצעת הרשמה, ניתן להתעלם מאימייל זה
+              </p>
+              <p style="margin:8px 0 0;font-size:11px;color:#d1d5db;">
+                © 2025 MDA Young · כל הזכויות שמורות
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
