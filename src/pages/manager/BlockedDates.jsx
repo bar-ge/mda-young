@@ -34,19 +34,20 @@ export default function BlockedDates() {
     e.preventDefault()
     if (!form.date) return
     setSaving(true)
-    await supabase.from('blocked_dates').upsert({ date: form.date, reason: form.reason.trim() || null, created_by: user.id })
-    setForm({ date: '', reason: '' })
-    setShowForm(false)
-    await load()
-    invalidate()
+    const { error } = await supabase.from('blocked_dates').upsert({ date: form.date, reason: form.reason.trim() || null, created_by: user.id })
+    if (!error) {
+      setForm({ date: '', reason: '' })
+      setShowForm(false)
+      await load()
+      invalidate()
+    }
     setSaving(false)
   }
 
   async function remove(id) {
     if (!confirm('להסיר חסימה זו?')) return
-    await supabase.from('blocked_dates').delete().eq('id', id)
-    await load()
-    invalidate()
+    const { error } = await supabase.from('blocked_dates').delete().eq('id', id)
+    if (!error) { await load(); invalidate() }
   }
 
   const now = new Date().toISOString().slice(0, 10)

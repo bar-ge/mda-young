@@ -109,7 +109,8 @@ export default function Profile() {
             <input
               value={form.full_name}
               onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all"
+              disabled={saving}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all disabled:opacity-60 disabled:bg-gray-50"
             />
           </div>
 
@@ -121,7 +122,8 @@ export default function Profile() {
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="050-000-0000"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all"
+              disabled={saving}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613] transition-all disabled:opacity-60 disabled:bg-gray-50"
             />
           </div>
 
@@ -139,8 +141,8 @@ export default function Profile() {
               className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-50 active:scale-[0.98] transition-all shadow-sm shadow-red-500/20">
               {saving ? '...שומר' : 'שמירת שינויים'}
             </button>
-            <button type="button" onClick={cancelEdit}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600">
+            <button type="button" onClick={cancelEdit} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 disabled:opacity-50">
               ביטול
             </button>
           </div>
@@ -176,7 +178,7 @@ export default function Profile() {
       </div>
 
       {/* Sign out */}
-      <button onClick={signOut}
+      <button onClick={() => { if (confirm('להתנתק?')) signOut() }}
         className="bg-white rounded-2xl border border-red-100 shadow-sm px-4 py-3 flex items-center justify-end gap-3 text-[#E30613] text-sm font-semibold active:bg-red-50 transition-colors">
         התנתקות
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

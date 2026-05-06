@@ -81,15 +81,15 @@ export default function Shifts() {
 
   async function applyForShift(shiftId) {
     setActing(shiftId)
-    await supabase.from('shift_assignments').insert({ shift_id: shiftId, user_id: user.id, status: 'pending' })
+    const { error } = await supabase.from('shift_assignments').insert({ shift_id: shiftId, user_id: user.id, status: 'pending' })
     setActing(null)
-    invalidate()
+    if (!error) invalidate()
   }
   async function cancelAssignment(assignmentId, shiftId) {
     setActing(shiftId)
-    await supabase.from('shift_assignments').delete().eq('id', assignmentId)
+    const { error } = await supabase.from('shift_assignments').delete().eq('id', assignmentId)
     setActing(null)
-    invalidate()
+    if (!error) invalidate()
   }
 
   const now = new Date()
@@ -151,7 +151,7 @@ export default function Shifts() {
       {/* Day detail panel */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={() => setSelected(null)} aria-label="סגור" className="text-gray-400 hover:text-gray-600 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

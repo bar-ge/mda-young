@@ -84,7 +84,8 @@ function Approvals({ invalidate }) {
   async function decide(id, status) {
     setActing(id)
     const assignment = assignments.find(a => a.id === id)
-    await supabase.from('shift_assignments').update({ status }).eq('id', id)
+    const { error } = await supabase.from('shift_assignments').update({ status }).eq('id', id)
+    if (error) { setActing(null); return }
     setAssignments(prev =>
       filter === 'pending'
         ? prev.filter(a => a.id !== id)
@@ -274,16 +275,16 @@ function ManualAssignment({ invalidate }) {
     const shift = shifts.find(s => s.id === shiftId)
     if (shift && (confirmedMap[shiftId] || 0) >= shift.max_volunteers) return
     setAdding(shiftId)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('shift_assignments')
       .insert({ shift_id: shiftId, user_id: null, manual_name: name, status: 'confirmed' })
       .select()
       .single()
-    if (data) {
+    if (!error && data) {
       setManualMap(prev => ({ ...prev, [shiftId]: [...(prev[shiftId] || []), data] }))
       setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || 0) + 1 }))
+      setNameInput(prev => ({ ...prev, [shiftId]: '' }))
     }
-    setNameInput(prev => ({ ...prev, [shiftId]: '' }))
     invalidate()
     setAdding(null)
     inputRefs.current[shiftId]?.focus()
@@ -291,10 +292,12 @@ function ManualAssignment({ invalidate }) {
 
   async function removeManual(assignmentId, shiftId) {
     setRemoving(assignmentId)
-    await supabase.from('shift_assignments').delete().eq('id', assignmentId)
-    setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
-    setConfirmedMap(prev => ({ ...prev, [shiftId]: Math.max(0, (prev[shiftId] || 0) - 1) }))
-    invalidate()
+    const { error } = await supabase.from('shift_assignments').delete().eq('id', assignmentId)
+    if (!error) {
+      setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+      setConfirmedMap(prev => ({ ...prev, [shiftId]: Math.max(0, (prev[shiftId] || 0) - 1) }))
+      invalidate()
+    }
     setRemoving(null)
   }
 

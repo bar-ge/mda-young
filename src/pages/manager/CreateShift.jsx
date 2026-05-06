@@ -56,6 +56,7 @@ export default function CreateShift({ onShiftCreated }) {
   const [templates, setTemplates] = useState([])
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
+  const [error,   setError]   = useState('')
   const [form, setForm] = useState({
     title: '', description: '', location: '',
     start_time: todayAt(8), end_time: todayAt(14),
@@ -102,8 +103,10 @@ export default function CreateShift({ onShiftCreated }) {
     e.preventDefault()
     setSaving(true)
     setSuccess('')
+    setError('')
 
     if (!isHoliday && new Date(form.end_time) <= new Date(form.start_time)) {
+      setError('שעת הסיום חייבת להיות אחרי שעת ההתחלה')
       setSaving(false)
       return
     }
@@ -123,12 +126,14 @@ export default function CreateShift({ onShiftCreated }) {
       created_by: user.id,
     }
 
-    const { error } = await supabase.from('shifts').insert(payload)
-    if (!error) {
+    const { error: insertError } = await supabase.from('shifts').insert(payload)
+    if (!insertError) {
       setSuccess(shiftType === 'holiday' ? 'יום החג נסגר בהצלחה' : 'המשמרת נוצרה בהצלחה!')
       onShiftCreated?.(new Date(form.start_time).toISOString().slice(0, 10))
       setForm({ title: '', description: '', location: '', start_time: todayAt(8), end_time: todayAt(14), max_volunteers: 1, branch_id: '', template_id: '', veteran_only: false })
       setTimeout(() => setSuccess(''), 4000)
+    } else {
+      setError('שגיאה ביצירת המשמרת, נסה שנית')
     }
     setSaving(false)
   }
@@ -287,6 +292,15 @@ export default function CreateShift({ onShiftCreated }) {
               )}
             </div>
           </>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl justify-end">
+            {error}
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
         )}
 
         {success && (

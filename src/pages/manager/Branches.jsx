@@ -22,24 +22,26 @@ export default function Branches() {
     e.preventDefault()
     if (!form.name.trim()) return
     setSaving(true)
-    await supabase.from('branches').insert({ name: form.name.trim(), location: form.location.trim() || null })
-    setForm({ name: '', location: '' })
-    setShowForm(false)
-    await load()
+    const { error } = await supabase.from('branches').insert({ name: form.name.trim(), location: form.location.trim() || null })
+    if (!error) {
+      setForm({ name: '', location: '' })
+      setShowForm(false)
+      await load()
+    }
     setSaving(false)
   }
 
   async function toggleActive(branch) {
     setToggling(branch.id)
-    await supabase.from('branches').update({ active: !branch.active }).eq('id', branch.id)
-    await load()
+    const { error } = await supabase.from('branches').update({ active: !branch.active }).eq('id', branch.id)
+    if (!error) await load()
     setToggling(null)
   }
 
   async function deleteBranch(id) {
     if (!confirm('למחוק את הסניף?')) return
-    await supabase.from('branches').delete().eq('id', id)
-    await load()
+    const { error } = await supabase.from('branches').delete().eq('id', id)
+    if (!error) await load()
   }
 
   return (

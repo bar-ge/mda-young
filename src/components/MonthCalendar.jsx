@@ -130,54 +130,64 @@ export default function MonthCalendar({ jumpToDate }) {
     if (!confirm('למחוק משמרת זו? הפעולה תמחק גם את כל ההרשמות אליה.')) return
     setDeleting(shiftId)
     await supabase.from('shift_assignments').delete().eq('shift_id', shiftId)
-    await supabase.from('shifts').delete().eq('id', shiftId)
-    setShifts(prev => prev.filter(s => s.id !== shiftId))
-    invalidate()
+    const { error } = await supabase.from('shifts').delete().eq('id', shiftId)
+    if (!error) {
+      setShifts(prev => prev.filter(s => s.id !== shiftId))
+      invalidate()
+    }
     setDeleting(null)
   }
 
   async function removeAssignment(assignmentId, shiftId, isManual) {
     setRemoving(assignmentId)
-    await supabase.from('shift_assignments').delete().eq('id', assignmentId)
-    if (isManual) {
-      setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
-    } else {
-      setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+    const { error } = await supabase.from('shift_assignments').delete().eq('id', assignmentId)
+    if (!error) {
+      if (isManual) {
+        setManualMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+      } else {
+        setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || []).filter(a => a.id !== assignmentId) }))
+      }
+      invalidate()
     }
-    invalidate()
     setRemoving(null)
   }
 
   async function toggleShiftStatus(shift) {
     const newStatus = shift.status === 'cancelled' ? 'open' : 'cancelled'
     setToggling(shift.id)
-    await supabase.from('shifts').update({ status: newStatus }).eq('id', shift.id)
-    setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, status: newStatus } : s))
-    invalidate()
+    const { error } = await supabase.from('shifts').update({ status: newStatus }).eq('id', shift.id)
+    if (!error) {
+      setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, status: newStatus } : s))
+      invalidate()
+    }
     setToggling(null)
   }
 
   async function toggleVeteran(shift) {
     const newVal = !shift.veteran_only
     setTogVet(shift.id)
-    await supabase.from('shifts').update({ veteran_only: newVal }).eq('id', shift.id)
-    setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal } : s))
+    const { error } = await supabase.from('shifts').update({ veteran_only: newVal }).eq('id', shift.id)
+    if (!error) setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal } : s))
     setTogVet(null)
   }
 
   async function closeDay(dateStr) {
     setClosing(true)
-    await supabase.from('blocked_dates').upsert({ date: dateStr, created_by: user?.id })
-    setBlocked(prev => [...prev.filter(b => b.date !== dateStr), { date: dateStr, reason: null }])
-    invalidate()
+    const { error } = await supabase.from('blocked_dates').upsert({ date: dateStr, created_by: user?.id })
+    if (!error) {
+      setBlocked(prev => [...prev.filter(b => b.date !== dateStr), { date: dateStr, reason: null }])
+      invalidate()
+    }
     setClosing(false)
   }
 
   async function openDay(dateStr) {
     setClosing(true)
-    await supabase.from('blocked_dates').delete().eq('date', dateStr)
-    setBlocked(prev => prev.filter(b => b.date !== dateStr))
-    invalidate()
+    const { error } = await supabase.from('blocked_dates').delete().eq('date', dateStr)
+    if (!error) {
+      setBlocked(prev => prev.filter(b => b.date !== dateStr))
+      invalidate()
+    }
     setClosing(false)
   }
 
@@ -205,9 +215,9 @@ export default function MonthCalendar({ jumpToDate }) {
       ? { shift_id: shiftId, manual_name: addText.trim(), status: 'confirmed' }
       : { shift_id: shiftId, user_id: addUserId, status: 'confirmed' }
 
-    const { data } = await supabase.from('shift_assignments').insert(payload).select().single()
+    const { data, error } = await supabase.from('shift_assignments').insert(payload).select().single()
 
-    if (data) {
+    if (!error && data) {
       if (addMode === 'manual') {
         setManualMap(prev => ({
           ...prev,
@@ -251,9 +261,9 @@ export default function MonthCalendar({ jumpToDate }) {
       max_volunteers: parseInt(editForm.max_volunteers) || 1,
       veteran_only:   editForm.veteran_only,
     }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('shifts').update(payload).eq('id', shiftId).select().single()
-    if (data) setShifts(prev => prev.map(s => s.id === shiftId ? { ...s, ...data } : s))
+    if (!error && data) setShifts(prev => prev.map(s => s.id === shiftId ? { ...s, ...data } : s))
     setEditingId(null)
     invalidate()
     setSaving(false)
