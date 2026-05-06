@@ -37,6 +37,19 @@
   from { opacity: 0; transform: translateY(1rem); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(2rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-2rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.85); }
+  70%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
 @keyframes shimmer {
   from { background-position: -200% 0; }
   to   { background-position:  200% 0; }
@@ -49,9 +62,10 @@
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
-  .animate-slide-up {
-    animation: slide-up 0.22s ease-out both;
-  }
+  .animate-slide-up       { animation: slide-up       0.22s ease-out both; }
+  .animate-slide-in-right { animation: slide-in-right 0.28s ease-out both; }
+  .animate-slide-in-left  { animation: slide-in-left  0.28s ease-out both; }
+  .animate-pop-in         { animation: pop-in         0.35s cubic-bezier(.34,1.56,.64,1) both; }
   .skeleton {
     background: linear-gradient(90deg, #efefef 25%, #e4e4e4 50%, #efefef 75%);
     background-size: 200% 100%;
