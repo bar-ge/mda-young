@@ -165,9 +165,10 @@ export default function MonthCalendar({ jumpToDate }) {
 
   async function toggleVeteran(shift) {
     const newVal = !shift.veteran_only
+    const newStatus = newVal ? 'cancelled' : 'open'
     setTogVet(shift.id)
-    const { error } = await supabase.from('shifts').update({ veteran_only: newVal }).eq('id', shift.id)
-    if (!error) setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal } : s))
+    const { error } = await supabase.from('shifts').update({ veteran_only: newVal, status: newStatus }).eq('id', shift.id)
+    if (!error) setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal, status: newStatus } : s))
     setTogVet(null)
   }
 
