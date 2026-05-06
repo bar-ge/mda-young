@@ -5,6 +5,7 @@ import CreateShift from './manager/CreateShift'
 import BlockedDates from './manager/BlockedDates'
 import Dispatcher from './manager/Dispatcher'
 import ShiftsList from './manager/ShiftsList'
+import AuditLog from './manager/AuditLog'
 import MonthCalendar from '../components/MonthCalendar'
 import { useCalendar } from '../contexts/CalendarContext'
 
@@ -16,6 +17,7 @@ const tabs = [
   { id: 'templates',  label: 'תבניות',       icon: '📋' },
   { id: 'branches',   label: 'סניפים',       icon: '🏥' },
   { id: 'blocked',    label: 'חסימות',       icon: '🔒' },
+  { id: 'audit',      label: 'יומן',         icon: '📜' },
 ]
 
 export default function Manager() {
@@ -83,6 +85,7 @@ export default function Manager() {
             {tab === 'templates'  && <Templates />}
             {tab === 'branches'   && <Branches />}
             {tab === 'blocked'    && <BlockedDates />}
+            {tab === 'audit'      && <AuditLog />}
           </div>
 
         </div>

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
+import { useToast } from '../contexts/ToastContext'
 import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
 function formatHour(ts) {
@@ -28,15 +29,20 @@ function shiftDot(shift) {
 
 export default function Shifts() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const { year, month, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
   const [shifts,        setShifts]        = useState([])
   const [blocked,       setBlocked]       = useState([])
   const [myAssignments, setMyAssignments] = useState({})
   const [confirmedMap,  setConfirmedMap]  = useState({})
-  const [loading,  setLoading]  = useState(true)
-  const [filter,   setFilter]   = useState('open')
-  const [selected, setSelected] = useState(null)
-  const [acting,   setActing]   = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [filter,     setFilter]     = useState('open')
+  const [selected,   setSelected]   = useState(null)
+  const [acting,     setActing]     = useState(null)
+  const [pulling,    setPulling]    = useState(false)
+  const [pullY,      setPullY]      = useState(0)
+  const touchStartY  = useRef(0)
+  const containerRef = useRef(null)
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -83,13 +89,28 @@ export default function Shifts() {
     setActing(shiftId)
     const { error } = await supabase.from('shift_assignments').insert({ shift_id: shiftId, user_id: user.id, status: 'pending' })
     setActing(null)
-    if (!error) invalidate()
+    if (!error) { toast('נרשמת בהצלחה! ממתין לאישור', { type: 'info' }); invalidate() }
+    else toast('שגיאה בהרשמה', { type: 'error' })
   }
   async function cancelAssignment(assignmentId, shiftId) {
     setActing(shiftId)
     const { error } = await supabase.from('shift_assignments').delete().eq('id', assignmentId)
     setActing(null)
-    if (!error) invalidate()
+    if (!error) { toast('ההרשמה בוטלה'); invalidate() }
+    else toast('שגיאה בביטול', { type: 'error' })
+  }
+
+  function onTouchStart(e) {
+    touchStartY.current = e.touches[0].clientY
+  }
+  function onTouchMove(e) {
+    const delta = e.touches[0].clientY - touchStartY.current
+    const atTop = containerRef.current?.scrollTop === 0
+    if (atTop && delta > 0 && !loading) setPullY(Math.min(delta * 0.4, 60))
+  }
+  function onTouchEnd() {
+    if (pullY >= 55) { setPulling(true); load().finally(() => setPulling(false)) }
+    setPullY(0)
   }
 
   const now = new Date()
@@ -100,8 +121,31 @@ export default function Shifts() {
   const selectedShifts  = selected ? displayShifts.filter(s => s.start_time.slice(0, 10) === selected) : []
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
+  // confirmed count per date for CalendarGrid badge
+  const calCountMap = {}
+  Object.entries(confirmedMap).forEach(([shiftId, count]) => {
+    const shift = shifts.find(s => s.id === shiftId)
+    if (shift && count > 0) {
+      const date = shift.start_time.slice(0, 10)
+      calCountMap[date] = (calCountMap[date] || 0) + count
+    }
+  })
+
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden">
+    <div
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden"
+    >
+      {/* Pull-to-refresh indicator */}
+      {(pullY > 0 || pulling) && (
+        <div className="flex justify-center transition-all" style={{ height: pulling ? 32 : pullY * 0.5 }}>
+          <div className={`w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full ${pulling ? 'animate-spin' : ''}`}
+            style={{ opacity: pullY / 55, transform: `rotate(${pullY * 4}deg)` }} />
+        </div>
+      )}
       {/* Filter + legend row */}
       <div className="flex items-center justify-between lg:shrink-0">
         <div className="flex gap-2">
@@ -140,6 +184,7 @@ export default function Shifts() {
             loading={loading}
             selected={selected}
             onSelect={setSelected}
+            countMap={calCountMap}
           />
         </div>
 

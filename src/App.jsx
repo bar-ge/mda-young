@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ToastProvider } from './contexts/ToastContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Shifts from './pages/Shifts'
@@ -37,6 +38,7 @@ function Splash() {
 export default function App() {
   return (
     <AuthProvider>
+      <ToastProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -54,6 +56,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/shifts" replace />} />
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   )
 }

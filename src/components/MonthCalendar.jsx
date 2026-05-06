@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
+import { useToast } from '../contexts/ToastContext'
+
+async function logAudit(userId, action, entityId, details = {}) {
+  await supabase.from('audit_logs').insert({ user_id: userId, action, entity_type: 'shift', entity_id: entityId, details })
+}
 
 const DAYS_HEADER = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 
@@ -25,6 +30,8 @@ function toLocalDT(ts) {
 
 export default function MonthCalendar({ jumpToDate }) {
   const { user } = useAuth()
+  const { toast } = useToast()
+  const deleteTimers = useRef({})
   const { year, month, setYear, setMonth, prevMonth, nextMonth, refreshKey, invalidate } = useCalendar()
   const [shifts,           setShifts]           = useState([])
   const [blocked,          setBlocked]          = useState([])
@@ -126,16 +133,31 @@ export default function MonthCalendar({ jumpToDate }) {
     setLoading(false)
   }
 
-  async function deleteShift(shiftId) {
-    if (!confirm('למחוק משמרת זו? הפעולה תמחק גם את כל ההרשמות אליה.')) return
-    setDeleting(shiftId)
-    await supabase.from('shift_assignments').delete().eq('shift_id', shiftId)
-    const { error } = await supabase.from('shifts').delete().eq('id', shiftId)
-    if (!error) {
-      setShifts(prev => prev.filter(s => s.id !== shiftId))
+  function deleteShift(shiftId) {
+    const shift = shifts.find(s => s.id === shiftId)
+    if (!shift) return
+    setShifts(prev => prev.filter(s => s.id !== shiftId))
+    if (selected === shiftId) setSelected(null)
+
+    const tid = toast(`"${shift.title}" נמחקה`, {
+      duration: 5000,
+      action: {
+        label: 'ביטול',
+        fn: () => {
+          clearTimeout(deleteTimers.current[shiftId])
+          delete deleteTimers.current[shiftId]
+          setShifts(prev => [...prev, shift].sort((a, b) => a.start_time.localeCompare(b.start_time)))
+        },
+      },
+    })
+
+    deleteTimers.current[shiftId] = setTimeout(async () => {
+      delete deleteTimers.current[shiftId]
+      await supabase.from('shift_assignments').delete().eq('shift_id', shiftId)
+      await supabase.from('shifts').delete().eq('id', shiftId)
+      logAudit(user?.id, 'shift_deleted', shiftId, { title: shift.title })
       invalidate()
-    }
-    setDeleting(null)
+    }, 5000)
   }
 
   async function removeAssignment(assignmentId, shiftId, isManual) {
@@ -158,6 +180,8 @@ export default function MonthCalendar({ jumpToDate }) {
     const { error } = await supabase.from('shifts').update({ status: newStatus }).eq('id', shift.id)
     if (!error) {
       setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, status: newStatus } : s))
+      toast(newStatus === 'cancelled' ? 'המשמרת נסגרה' : 'המשמרת נפתחה')
+      logAudit(user?.id, 'shift_status_toggled', shift.id, { title: shift.title, status: newStatus })
       invalidate()
     }
     setToggling(null)
@@ -168,7 +192,11 @@ export default function MonthCalendar({ jumpToDate }) {
     const newStatus = newVal ? 'cancelled' : 'open'
     setTogVet(shift.id)
     const { error } = await supabase.from('shifts').update({ veteran_only: newVal, status: newStatus }).eq('id', shift.id)
-    if (!error) setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal, status: newStatus } : s))
+    if (!error) {
+      setShifts(prev => prev.map(s => s.id === shift.id ? { ...s, veteran_only: newVal, status: newStatus } : s))
+      toast(newVal ? 'סומן כבוגרים בלבד — המשמרת נסגרה' : 'בוגרים בוטל — המשמרת נפתחה')
+      logAudit(user?.id, 'veteran_toggled', shift.id, { title: shift.title, veteran_only: newVal })
+    }
     setTogVet(null)
   }
 
@@ -177,6 +205,8 @@ export default function MonthCalendar({ jumpToDate }) {
     const { error } = await supabase.from('blocked_dates').upsert({ date: dateStr, created_by: user?.id })
     if (!error) {
       setBlocked(prev => [...prev.filter(b => b.date !== dateStr), { date: dateStr, reason: null }])
+      toast('היום נחסם')
+      logAudit(user?.id, 'day_blocked', null, { date: dateStr })
       invalidate()
     }
     setClosing(false)
@@ -187,6 +217,8 @@ export default function MonthCalendar({ jumpToDate }) {
     const { error } = await supabase.from('blocked_dates').delete().eq('date', dateStr)
     if (!error) {
       setBlocked(prev => prev.filter(b => b.date !== dateStr))
+      toast('חסימת היום בוטלה')
+      logAudit(user?.id, 'day_unblocked', null, { date: dateStr })
       invalidate()
     }
     setClosing(false)
@@ -224,14 +256,20 @@ export default function MonthCalendar({ jumpToDate }) {
           ...prev,
           [shiftId]: [...(prev[shiftId] || []), { id: data.id, manual_name: data.manual_name }],
         }))
+        toast(`${addText.trim()} שובץ`)
+        logAudit(user?.id, 'manual_assigned', shiftId, { name: addText.trim() })
       } else {
         const profile = allProfiles.find(p => p.id === addUserId)
         setConfirmedMap(prev => ({
           ...prev,
           [shiftId]: [...(prev[shiftId] || []), { id: data.id, name: profile?.full_name || 'מתנדב' }],
         }))
+        toast(`${profile?.full_name || 'מתנדב'} שובץ`)
+        logAudit(user?.id, 'manual_assigned', shiftId, { name: profile?.full_name })
       }
       invalidate()
+    } else if (error) {
+      toast('שגיאה בשיבוץ', { type: 'error' })
     }
     setAddingToShift(null)
     setAddingAssign(false)
@@ -264,7 +302,11 @@ export default function MonthCalendar({ jumpToDate }) {
     }
     const { data, error } = await supabase
       .from('shifts').update(payload).eq('id', shiftId).select().single()
-    if (!error && data) setShifts(prev => prev.map(s => s.id === shiftId ? { ...s, ...data } : s))
+    if (!error && data) {
+      setShifts(prev => prev.map(s => s.id === shiftId ? { ...s, ...data } : s))
+      toast('המשמרת עודכנה')
+      logAudit(user?.id, 'shift_updated', shiftId, { title: data.title })
+    }
     setEditingId(null)
     invalidate()
     setSaving(false)
@@ -339,8 +381,12 @@ export default function MonthCalendar({ jumpToDate }) {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
+          <div className="grid grid-cols-7">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="min-h-[52px] flex flex-col items-center justify-start pt-1.5 pb-1 gap-1 border-b border-r border-gray-50 last:border-r-0">
+                {i >= 7 && <div className="skeleton w-6 h-6 rounded-full" />}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-7">

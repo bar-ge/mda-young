@@ -10,6 +10,7 @@ export default function CalendarGrid({
   dotFn,
   loading,
   selected, onSelect,
+  countMap = {},
 }) {
   const today = new Date()
   const todayStr = isoDate(today.getFullYear(), today.getMonth(), today.getDate())
@@ -56,18 +57,23 @@ export default function CalendarGrid({
         </div>
 
         {loading ? (
-          <div className="flex-1 flex justify-center items-center">
-            <div className="w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
+          <div className="flex-1 grid grid-cols-7" style={{ gridAutoRows: 'minmax(0, 1fr)' }}>
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center justify-start pt-1.5 border-b border-r border-gray-50 last:border-r-0">
+                {i >= 7 && <div className="skeleton w-6 h-6 rounded-full" />}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex-1 grid grid-cols-7" style={{ gridAutoRows: 'minmax(0, 1fr)' }}>
             {cells.map((day, idx) => {
               if (!day) return <div key={`e${idx}`} className="border-b border-r border-gray-50 last:border-r-0" />
-              const dateStr  = isoDate(year, month, day)
+              const dateStr   = isoDate(year, month, day)
               const dayShifts = shiftMap[dateStr] || []
               const isBlocked = blockedSet.has(dateStr)
               const isToday   = dateStr === todayStr
               const isSel     = selected === dateStr
+              const dayCount  = countMap[dateStr]
 
               return (
                 <button
@@ -93,6 +99,9 @@ export default function CalendarGrid({
                         <span className="text-[8px] text-gray-400 leading-none">+{dayShifts.length - 3}</span>
                       )}
                     </div>
+                  )}
+                  {dayCount != null && (
+                    <span className="text-[8px] font-bold text-emerald-600 leading-none">{dayCount}</span>
                   )}
                 </button>
               )

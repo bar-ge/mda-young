@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const shiftTypes = [
   { id: 'regular', label: 'משמרת רגילה', icon: '🕐', desc: 'בוקר / ערב / לילה' },
@@ -51,11 +52,11 @@ function DateSelects({ value, onChange }) {
 
 export default function CreateShift({ onShiftCreated }) {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [shiftType, setShiftType] = useState('regular')
   const [branches, setBranches] = useState([])
   const [templates, setTemplates] = useState([])
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
   const [error,   setError]   = useState('')
   const [form, setForm] = useState({
     title: '', description: '', location: '',
@@ -128,10 +129,14 @@ export default function CreateShift({ onShiftCreated }) {
 
     const { error: insertError } = await supabase.from('shifts').insert(payload)
     if (!insertError) {
-      setSuccess(shiftType === 'holiday' ? 'יום החג נסגר בהצלחה' : 'המשמרת נוצרה בהצלחה!')
+      const msg = shiftType === 'holiday' ? 'יום החג נסגר בהצלחה' : 'המשמרת נוצרה בהצלחה!'
+      toast(msg)
+      await supabase.from('audit_logs').insert({
+        user_id: user.id, action: 'shift_created', entity_type: 'shift',
+        details: { title: payload.title, shift_type: payload.shift_type },
+      })
       onShiftCreated?.(new Date(form.start_time).toISOString().slice(0, 10))
       setForm({ title: '', description: '', location: '', start_time: todayAt(8), end_time: todayAt(14), max_volunteers: 1, branch_id: '', template_id: '', veteran_only: false })
-      setTimeout(() => setSuccess(''), 4000)
     } else {
       setError('שגיאה ביצירת המשמרת, נסה שנית')
     }
@@ -299,15 +304,6 @@ export default function CreateShift({ onShiftCreated }) {
             {error}
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-        )}
-
-        {success && (
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm px-4 py-3 rounded-xl justify-end">
-            {success}
-            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
           </div>
         )}

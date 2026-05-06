@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useCalendar } from '../../contexts/CalendarContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 import { isoDate } from '../../components/CalendarGrid'
+
+async function logAudit(userId, action, details = {}) {
+  await supabase.from('audit_logs').insert({ user_id: userId, action, entity_type: 'assignment', details })
+}
 
 function formatDate(ts) {
   const d = new Date(ts)
@@ -23,11 +29,14 @@ function initials(name) {
 
 /* ─── Approvals sub-view ─── */
 function Approvals({ invalidate }) {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [assignments,  setAssignments]  = useState([])
   const [confirmedMap, setConfirmedMap] = useState({})
   const [loading,      setLoading]      = useState(true)
   const [filter,       setFilter]       = useState('pending')
   const [acting,       setActing]       = useState(null)
+  const [bulking,      setBulking]      = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => { load() }, [filter])
@@ -85,7 +94,7 @@ function Approvals({ invalidate }) {
     setActing(id)
     const assignment = assignments.find(a => a.id === id)
     const { error } = await supabase.from('shift_assignments').update({ status }).eq('id', id)
-    if (error) { setActing(null); return }
+    if (error) { setActing(null); toast('שגיאה בעדכון', { type: 'error' }); return }
     setAssignments(prev =>
       filter === 'pending'
         ? prev.filter(a => a.id !== id)
@@ -95,7 +104,13 @@ function Approvals({ invalidate }) {
       const sid = assignment.shift_id
       if (status === 'confirmed') {
         setConfirmedMap(prev => ({ ...prev, [sid]: (prev[sid] || 0) + 1 }))
-      } else if (assignment.status === 'confirmed' && status !== 'confirmed') {
+        toast(`${assignment.profile?.full_name || 'מתנדב'} אושר`)
+        logAudit(user?.id, 'volunteer_approved', { name: assignment.profile?.full_name })
+      } else if (status === 'declined') {
+        toast(`${assignment.profile?.full_name || 'מתנדב'} נדחה`, { type: 'warning' })
+        logAudit(user?.id, 'volunteer_declined', { name: assignment.profile?.full_name })
+      }
+      if (assignment.status === 'confirmed' && status !== 'confirmed') {
         setConfirmedMap(prev => ({ ...prev, [sid]: Math.max(0, (prev[sid] || 0) - 1) }))
       }
     }
@@ -104,10 +119,39 @@ function Approvals({ invalidate }) {
     setActing(null)
   }
 
+  async function bulkApprove() {
+    const pending = assignments.filter(a => a.status === 'pending')
+    if (!pending.length) return
+    setBulking(true)
+    const ids = pending.map(a => a.id)
+    const { error } = await supabase
+      .from('shift_assignments')
+      .update({ status: 'confirmed' })
+      .in('id', ids)
+    if (error) { setBulking(false); toast('שגיאה באישור המוני', { type: 'error' }); return }
+    setAssignments(prev => prev.filter(a => !ids.includes(a.id)))
+    setPendingCount(0)
+    pending.forEach(a => {
+      const sid = a.shift_id
+      setConfirmedMap(prev => ({ ...prev, [sid]: (prev[sid] || 0) + 1 }))
+    })
+    logAudit(user?.id, 'bulk_approved', { count: ids.length })
+    toast(`${ids.length} מתנדבים אושרו בבת אחת ⚡`)
+    invalidate()
+    setBulking(false)
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">{assignments.length} רישומים</span>
+        <div className="flex gap-2">
+          {filter === 'pending' && assignments.filter(a => a.status === 'pending').length > 1 && (
+            <button onClick={bulkApprove} disabled={bulking}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-sm shadow-emerald-500/25 disabled:opacity-50 transition-all active:scale-95">
+              {bulking ? '...' : `⚡ אשר הכל (${assignments.filter(a => a.status === 'pending').length})`}
+            </button>
+          )}
+        </div>
         <div className="flex gap-2">
           <button onClick={() => setFilter('decided')}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${filter === 'decided' ? 'bg-[#E30613] text-white shadow-md shadow-red-500/25' : 'bg-white text-gray-500 border border-gray-200'}`}>
@@ -126,8 +170,27 @@ function Approvals({ invalidate }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
+        <div className="grid gap-3 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-end gap-3">
+                <div className="flex flex-col gap-1.5 items-end flex-1">
+                  <div className="skeleton h-3.5 w-28 rounded" />
+                  <div className="skeleton h-2.5 w-20 rounded" />
+                </div>
+                <div className="skeleton w-9 h-9 rounded-full" />
+              </div>
+              <div className="skeleton h-px w-full" />
+              <div className="flex flex-col gap-1.5 items-end">
+                <div className="skeleton h-3 w-36 rounded" />
+                <div className="skeleton h-2.5 w-48 rounded" />
+              </div>
+              <div className="flex gap-2">
+                <div className="skeleton flex-1 h-9 rounded-xl" />
+                <div className="skeleton flex-1 h-9 rounded-xl" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : assignments.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-14 text-center">
@@ -216,6 +279,8 @@ function Approvals({ invalidate }) {
 
 /* ─── Manual assignment sub-view ─── */
 function ManualAssignment({ invalidate }) {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const { year, month } = useCalendar()
   const [shifts,        setShifts]        = useState([])
   const [manualMap,     setManualMap]     = useState({})
@@ -284,8 +349,12 @@ function ManualAssignment({ invalidate }) {
       setManualMap(prev => ({ ...prev, [shiftId]: [...(prev[shiftId] || []), data] }))
       setConfirmedMap(prev => ({ ...prev, [shiftId]: (prev[shiftId] || 0) + 1 }))
       setNameInput(prev => ({ ...prev, [shiftId]: '' }))
+      toast(`${name} שובץ בהצלחה`)
+      logAudit(user?.id, 'manual_assigned', { name })
+      invalidate()
+    } else if (error) {
+      toast('שגיאה בשיבוץ', { type: 'error' })
     }
-    invalidate()
     setAdding(null)
     inputRefs.current[shiftId]?.focus()
   }
@@ -311,8 +380,21 @@ function ManualAssignment({ invalidate }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="skeleton w-10 h-5 rounded-full" />
+                  <div className="skeleton w-4 h-4 rounded" />
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5 items-end">
+                  <div className="skeleton h-3.5 w-32 rounded" />
+                  <div className="skeleton h-2.5 w-44 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : shifts.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-14 text-center">

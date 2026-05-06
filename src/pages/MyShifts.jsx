@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
@@ -22,8 +22,12 @@ export default function MyShifts() {
   const { user } = useAuth()
   const { year, month, prevMonth, nextMonth, refreshKey } = useCalendar()
   const [assignments, setAssignments] = useState([])
-  const [loading,     setLoading]     = useState(true)
-  const [selected,    setSelected]    = useState(null)
+  const [loading,   setLoading]   = useState(true)
+  const [selected,  setSelected]  = useState(null)
+  const [pulling,   setPulling]   = useState(false)
+  const [pullY,     setPullY]     = useState(0)
+  const touchStartY  = useRef(0)
+  const containerRef = useRef(null)
 
   useEffect(() => { load() }, [refreshKey])
   useEffect(() => { setSelected(null) }, [year, month])
@@ -37,6 +41,17 @@ export default function MyShifts() {
       .order('assigned_at', { ascending: false })
     if (data) setAssignments(data)
     setLoading(false)
+  }
+
+  function onTouchStart(e) { touchStartY.current = e.touches[0].clientY }
+  function onTouchMove(e) {
+    const delta = e.touches[0].clientY - touchStartY.current
+    const atTop = containerRef.current?.scrollTop === 0
+    if (atTop && delta > 0 && !loading) setPullY(Math.min(delta * 0.4, 60))
+  }
+  function onTouchEnd() {
+    if (pullY >= 55) { setPulling(true); load().finally(() => setPulling(false)) }
+    setPullY(0)
   }
 
   // Stats use all assignments (not month-scoped)
@@ -59,7 +74,19 @@ export default function MyShifts() {
     : []
 
   return (
-    <div className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden">
+    <div
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      className="flex flex-col gap-4 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden"
+    >
+      {(pullY > 0 || pulling) && (
+        <div className="flex justify-center transition-all" style={{ height: pulling ? 32 : pullY * 0.5 }}>
+          <div className={`w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full ${pulling ? 'animate-spin' : ''}`}
+            style={{ opacity: pullY / 55, transform: `rotate(${pullY * 4}deg)` }} />
+        </div>
+      )}
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 lg:shrink-0">
         <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
