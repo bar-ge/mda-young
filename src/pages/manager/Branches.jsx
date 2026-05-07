@@ -13,9 +13,12 @@ export default function Branches() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase.from('branches').select('*').order('created_at')
-    if (data) setBranches(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase.from('branches').select('*').order('created_at')
+      if (data) setBranches(data)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function save(e) {

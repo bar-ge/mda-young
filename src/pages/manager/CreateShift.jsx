@@ -67,12 +67,14 @@ export default function CreateShift({ onShiftCreated }) {
   useEffect(() => { loadOptions() }, [])
 
   async function loadOptions() {
-    const [{ data: b }, { data: t }] = await Promise.all([
-      supabase.from('branches').select('id, name').eq('active', true).order('name'),
-      supabase.from('shift_templates').select('*, branches(name)').eq('active', true).order('start_hour'),
-    ])
-    if (b) setBranches(b)
-    if (t) setTemplates(t)
+    try {
+      const [{ data: b }, { data: t }] = await Promise.all([
+        supabase.from('branches').select('id, name').eq('active', true).order('name'),
+        supabase.from('shift_templates').select('*, branches(name)').eq('active', true).order('start_hour'),
+      ])
+      if (b) setBranches(b)
+      if (t) setTemplates(t)
+    } catch {}
   }
 
   function applyTemplate(templateId) {

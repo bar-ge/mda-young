@@ -43,24 +43,27 @@ export default function ShiftsList({ typeFilter = null }) {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const { data: sh } = await supabase
-      .from('shifts').select('*')
-      .gte('start_time', from).lte('start_time', to)
-      .order('start_time')
+    try {
+      const { data: sh } = await supabase
+        .from('shifts').select('*')
+        .gte('start_time', from).lte('start_time', to)
+        .order('start_time')
 
-    if (sh) {
-      setShifts(sh)
-      const ids = sh.map(s => s.id)
-      if (ids.length) {
-        const { data: ca } = await supabase
-          .from('shift_assignments').select('shift_id')
-          .eq('status', 'confirmed').in('shift_id', ids)
-        const cmap = {}
-        ca?.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
-        setCountMap(cmap)
+      if (sh) {
+        setShifts(sh)
+        const ids = sh.map(s => s.id)
+        if (ids.length) {
+          const { data: ca } = await supabase
+            .from('shift_assignments').select('shift_id')
+            .eq('status', 'confirmed').in('shift_id', ids)
+          const cmap = {}
+          ca?.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+          setCountMap(cmap)
+        }
       }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function toggleExpand(shiftId) {

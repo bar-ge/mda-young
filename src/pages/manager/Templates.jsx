@@ -208,13 +208,18 @@ export default function Templates() {
 
   async function load() {
     setLoading(true)
-    const [{ data: t }, { data: b }] = await Promise.all([
-      supabase.from('shift_templates').select('*, branches(name)').order('start_hour'),
-      supabase.from('branches').select('id, name').eq('active', true).order('name'),
-    ])
-    if (t) setTemplates(t)
-    if (b) setBranches(b)
-    setLoading(false)
+    let t, b
+    try {
+      const [{ data: td }, { data: bd }] = await Promise.all([
+        supabase.from('shift_templates').select('*, branches(name)').order('start_hour'),
+        supabase.from('branches').select('id, name').eq('active', true).order('name'),
+      ])
+      t = td; b = bd
+      if (t) setTemplates(t)
+      if (b) setBranches(b)
+    } finally {
+      setLoading(false)
+    }
 
     if (!autoRan.current && t?.some(tpl => tpl.active)) {
       autoRan.current = true

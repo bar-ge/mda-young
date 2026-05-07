@@ -25,9 +25,12 @@ export default function BlockedDates() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase.from('blocked_dates').select('*').order('date')
-    if (data) setBlocked(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase.from('blocked_dates').select('*').order('date')
+      if (data) setBlocked(data)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function save(e) {
