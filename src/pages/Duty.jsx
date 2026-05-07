@@ -5,7 +5,7 @@ import { useCalendar } from '../contexts/CalendarContext'
 import { useToast } from '../contexts/ToastContext'
 import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
-function vehicleDot() { return 'bg-blue-500' }
+function vehicleDot(s) { return s.hasDriver ? 'bg-emerald-500' : 'bg-amber-400' }
 
 export default function Duty() {
   const { profile } = useAuth()
@@ -93,7 +93,7 @@ export default function Duty() {
     else toast('שגיאה', { type: 'error' })
   }
 
-  // Build calendar dots: for each day in month, create virtual entries per available vehicle
+  // Build calendar dots: green = driver assigned, amber = needs driver
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const calShifts = []
   for (let d = 1; d <= daysInMonth; d++) {
@@ -101,7 +101,8 @@ export default function Duty() {
     const weekday = new Date(dateStr + 'T12:00:00').getDay()
     vehicles.forEach(v => {
       if ((v.available_days || []).includes(weekday)) {
-        calShifts.push({ id: `${v.id}-${dateStr}`, start_time: dateStr + 'T00:00:00' })
+        const shift = monthShifts.find(s => s.vehicle_id === v.id && s.start_time.slice(0, 10) === dateStr)
+        calShifts.push({ id: `${v.id}-${dateStr}`, start_time: dateStr + 'T00:00:00', hasDriver: !!shift?.driver_name })
       }
     })
   }
@@ -134,6 +135,18 @@ export default function Duty() {
         </div>
       )}
 
+
+      {/* Legend */}
+      <div className="flex items-center justify-end gap-3 lg:shrink-0">
+        <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          ממתין לשיבוץ
+        </span>
+        <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          שובץ נהג
+        </span>
+      </div>
 
       <div className="lg:flex lg:gap-6 lg:flex-1 lg:min-h-0">
         <div className={`min-w-0 lg:h-full lg:overflow-hidden ${selected ? 'lg:flex-1' : 'lg:w-full'}`}>
