@@ -5,8 +5,6 @@ import { useCalendar } from '../contexts/CalendarContext'
 import { useToast } from '../contexts/ToastContext'
 import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
-const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳']
-
 function vehicleDot() { return 'bg-blue-500' }
 
 export default function Duty() {
@@ -16,10 +14,10 @@ export default function Duty() {
 
   const [vehicles,    setVehicles]    = useState([])
   const [monthShifts, setMonthShifts] = useState([])
-  const [drivers,     setDrivers]     = useState([])
   const [loading,     setLoading]     = useState(true)
   const [selected,    setSelected]    = useState(null)
-  const [assigningId, setAssigningId] = useState(null) // vehicle.id being assigned
+  const [assigningId, setAssigningId] = useState(null)
+  const [driverText,  setDriverText]  = useState('')
   const [saving,      setSaving]      = useState(false)
   const [pulling,     setPulling]     = useState(false)
   const [pullY,       setPullY]       = useState(0)
@@ -36,19 +34,15 @@ export default function Duty() {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: veh }, { data: sh }, { data: drv }] = await Promise.all([
+    const [{ data: veh }, { data: sh }] = await Promise.all([
       supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
       supabase.from('duty_shifts')
         .select('*, driver:profiles!duty_shifts_driver_id_fkey(id,full_name)')
         .gte('start_time', from).lte('start_time', to)
         .neq('status', 'cancelled'),
-      isManager
-        ? supabase.from('profiles').select('id,full_name').order('full_name')
-        : Promise.resolve({ data: [] }),
     ])
     if (veh) setVehicles(veh)
     if (sh)  setMonthShifts(sh)
-    if (drv) setDrivers(drv)
     setLoading(false)
   }
 
@@ -64,32 +58,34 @@ export default function Duty() {
   }
 
   // Assign driver: upsert duty_shift for vehicle+date
-  async function handleAssign(vehicle, dateStr, driverId) {
+  async function handleAssign(vehicle, dateStr) {
+    const name = driverText.trim()
+    if (!name) return
     setSaving(true)
     const existing = monthShifts.find(s => s.vehicle_id === vehicle.id && s.start_time.slice(0, 10) === dateStr)
     let error
     if (existing) {
       ;({ error } = await supabase.from('duty_shifts')
-        .update({ driver_id: driverId, status: 'assigned' }).eq('id', existing.id))
+        .update({ driver_name: name, status: 'assigned' }).eq('id', existing.id))
     } else {
       ;({ error } = await supabase.from('duty_shifts').insert({
-        vehicle_id: vehicle.id,
-        driver_id:  driverId,
-        start_time: `${dateStr}T07:00:00`,
-        end_time:   `${dateStr}T19:00:00`,
-        status:     'assigned',
+        vehicle_id:  vehicle.id,
+        driver_name: name,
+        start_time:  `${dateStr}T07:00:00`,
+        end_time:    `${dateStr}T19:00:00`,
+        status:      'assigned',
       }))
     }
     setSaving(false)
     if (error) { toast('שגיאה בשיבוץ', { type: 'error' }); return }
     toast('הנהג שובץ בהצלחה', { type: 'success' })
-    setAssigningId(null)
+    setAssigningId(null); setDriverText('')
     load()
   }
 
   async function handleUnassign(shiftId) {
     const { error } = await supabase.from('duty_shifts')
-      .update({ driver_id: null, status: 'open' }).eq('id', shiftId)
+      .update({ driver_id: null, driver_name: null, status: 'open' }).eq('id', shiftId)
     if (!error) { toast('שיבוץ בוטל'); load() }
     else toast('שגיאה', { type: 'error' })
   }
@@ -196,7 +192,7 @@ export default function Duty() {
                         </div>
 
                         {/* Driver status */}
-                        {shift?.driver ? (
+                        {shift?.driver_name ? (
                           <div className="flex items-center justify-between gap-2 bg-emerald-50 rounded-xl px-3 py-2">
                             {isManager && (
                               <button onClick={() => handleUnassign(shift.id)}
@@ -205,7 +201,7 @@ export default function Duty() {
                               </button>
                             )}
                             <div className="flex items-center gap-1.5 mr-auto">
-                              <span className="text-xs text-emerald-700 font-semibold">{shift.driver.full_name}</span>
+                              <span className="text-xs text-emerald-700 font-semibold">{shift.driver_name}</span>
                               <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/>
                               </svg>
@@ -214,7 +210,7 @@ export default function Duty() {
                         ) : (
                           <div className="flex items-center justify-end gap-2 bg-amber-50 rounded-xl px-3 py-2">
                             {isManager && !isAssigning && (
-                              <button onClick={() => { setAssigningId(v.id) }}
+                              <button onClick={() => setAssigningId(v.id)}
                                 className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
                                 + שבץ נהג
                               </button>
@@ -226,31 +222,31 @@ export default function Duty() {
                           </div>
                         )}
 
-                        {/* Inline driver list */}
+                        {/* Inline text input */}
                         {isManager && isAssigning && (
-                          <div className="flex flex-col gap-1 rounded-xl border border-blue-100 bg-white overflow-hidden">
-                            <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
-                              <button onClick={() => { setAssigningId(null); setDriverSel('') }}
-                                className="text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
-                                ביטול
-                              </button>
-                              <span className="text-[10px] font-bold text-gray-400">בחר נהג</span>
-                            </div>
-                            {drivers.map((d, i) => (
-                              <button key={d.id} onClick={() => handleAssign(v, selected, d.id)}
-                                disabled={saving}
-                                className={`flex items-center justify-end gap-2 px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-blue-50 active:bg-blue-100 transition-colors text-right disabled:opacity-40 ${
-                                  i !== drivers.length - 1 ? 'border-b border-gray-50' : ''
-                                }`}>
-                                {d.full_name}
-                              </button>
-                            ))}
+                          <div className="flex gap-2 items-center">
+                            <button onClick={() => { setAssigningId(null); setDriverText('') }}
+                              className="shrink-0 text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
+                              ביטול
+                            </button>
+                            <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverText.trim()}
+                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
+                              {saving ? '...' : 'שבץ'}
+                            </button>
+                            <input
+                              autoFocus
+                              value={driverText}
+                              onChange={e => setDriverText(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleAssign(v, selected)}
+                              placeholder="שם הנהג"
+                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right"
+                            />
                           </div>
                         )}
 
-                        {/* Reassign link (when driver already set) */}
-                        {isManager && shift?.driver && !isAssigning && (
-                          <button onClick={() => { setAssigningId(v.id) }}
+                        {/* Reassign link */}
+                        {isManager && shift?.driver_name && !isAssigning && (
+                          <button onClick={() => { setAssigningId(v.id); setDriverText(shift.driver_name) }}
                             className="text-[10px] text-blue-500 hover:text-blue-700 font-medium text-right transition-colors">
                             החלף נהג
                           </button>
