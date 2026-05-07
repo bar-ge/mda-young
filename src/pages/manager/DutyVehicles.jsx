@@ -5,7 +5,7 @@ import { useToast } from '../../contexts/ToastContext'
 const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳']
 const DAY_FULL   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']
 
-const INPUT  = "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right"
+const INPUT  = "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all text-right"
 const SELECT = INPUT + " appearance-none"
 
 function formatHour(ts) {
@@ -26,9 +26,11 @@ function DayPicker({ value, onChange }) {
       <div className="flex gap-1.5 justify-end">
         {DAY_LABELS.map((label, i) => (
           <button key={i} type="button" onClick={() => toggle(i)}
-            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+            aria-label={DAY_FULL[i]}
+            aria-pressed={value.includes(i)}
+            className={`w-11 h-11 rounded-lg text-xs font-bold transition-all ${
               value.includes(i)
-                ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/25'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
             }`}>
             {label}
