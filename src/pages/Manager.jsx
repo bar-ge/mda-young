@@ -6,6 +6,7 @@ import BlockedDates from './manager/BlockedDates'
 import Dispatcher from './manager/Dispatcher'
 import ShiftsList from './manager/ShiftsList'
 import AuditLog from './manager/AuditLog'
+import DutyVehicles from './manager/DutyVehicles'
 import MonthCalendar from '../components/MonthCalendar'
 import { useCalendar } from '../contexts/CalendarContext'
 
@@ -14,6 +15,7 @@ const tabs = [
   { id: 'shifts',     label: 'יצירת משמרת', icon: '➕' },
   { id: 'list',       label: 'משמרות',       icon: '📅' },
   { id: 'events',     label: 'אירועים',      icon: '⭐' },
+  { id: 'duty',       label: 'רכבי כונן',   icon: '🚑' },
   { id: 'templates',  label: 'תבניות',       icon: '📋' },
   { id: 'branches',   label: 'סניפים',       icon: '🏥' },
   { id: 'blocked',    label: 'חסימות',       icon: '🔒' },
@@ -82,6 +84,7 @@ export default function Manager() {
             {tab === 'shifts'     && <CreateShift onShiftCreated={handleShiftCreated} />}
             {tab === 'list'       && <ShiftsList />}
             {tab === 'events'     && <ShiftsList typeFilter="event" />}
+            {tab === 'duty'       && <DutyVehicles />}
             {tab === 'templates'  && <Templates />}
             {tab === 'branches'   && <Branches />}
             {tab === 'blocked'    && <BlockedDates />}

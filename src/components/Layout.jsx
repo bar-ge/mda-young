@@ -26,6 +26,17 @@ const volunteerNav = [
     ),
   },
   {
+    to: '/duty',
+    label: 'כוננים',
+    icon: (active) => (
+      <svg viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <path d="M19 17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2z"/>
+        <circle cx="12" cy="11" r="2.5"/>
+        <path d="M7 17v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1"/>
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'פרופיל',
     icon: (active) => (
@@ -51,6 +62,7 @@ const managerExtra = {
 const pageTitles = {
   '/shifts':    'משמרות',
   '/my-shifts': 'המשמרות שלי',
+  '/duty':      'כוננים',
   '/profile':   'פרופיל',
   '/manager':   'ניהול',
 }

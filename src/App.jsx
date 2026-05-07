@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Shifts from './pages/Shifts'
 import MyShifts from './pages/MyShifts'
+import Duty from './pages/Duty'
 import Profile from './pages/Profile'
 import Manager from './pages/Manager'
 
@@ -50,6 +51,7 @@ export default function App() {
             <Route index element={<Navigate to="/shifts" replace />} />
             <Route path="shifts"    element={<Shifts />} />
             <Route path="my-shifts" element={<MyShifts />} />
+            <Route path="duty"      element={<Duty />} />
             <Route path="manager"   element={<Manager />} />
             <Route path="profile"   element={<Profile />} />
           </Route>
