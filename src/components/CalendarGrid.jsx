@@ -36,13 +36,13 @@ export default function CalendarGrid({
     <div className="w-full h-full flex flex-col gap-3">
       {/* Month navigation */}
       <div className="shrink-0 flex items-center justify-between">
-        <button onClick={onNext} disabled={loading} aria-label="חודש הבא" className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
+        <button onClick={onNext} disabled={loading} aria-label="חודש הבא" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <span className="font-bold text-gray-900 text-sm">{monthName}</span>
-        <button onClick={onPrev} disabled={loading} aria-label="חודש קודם" className="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
+        <button onClick={onPrev} disabled={loading} aria-label="חודש קודם" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>

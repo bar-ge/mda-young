@@ -278,7 +278,7 @@ export default function Shifts() {
                         <div className="flex items-center gap-2">
                           {assignment.status === 'pending' && (
                             <button onClick={() => cancelAssignment(assignment.id, shift.id)} disabled={acting === shift.id}
-                              className="text-xs text-gray-400 hover:text-red-500 transition-colors font-medium">
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-xs text-gray-400 hover:text-red-500 transition-colors font-medium">
                               ביטול
                             </button>
                           )}

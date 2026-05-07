@@ -27,8 +27,9 @@ function Avatar({ name, size = 9 }) {
   const initials = name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   const colors = ['bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-sky-500', 'bg-violet-500', 'bg-pink-500']
   const color = colors[(name?.charCodeAt(0) || 0) % colors.length]
+  const sizeClass = size === 9 ? 'w-9 h-9' : size === 8 ? 'w-8 h-8' : 'w-10 h-10'
   return (
-    <div className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center shrink-0 shadow-sm`}>
+    <div className={`${sizeClass} rounded-full ${color} flex items-center justify-center shrink-0 shadow-sm`}>
       <span className="text-white font-semibold text-xs">{initials}</span>
     </div>
   )
@@ -169,6 +170,7 @@ export default function Home() {
         <form onSubmit={send} className="flex gap-2 items-end">
           <button
             type="submit"
+            aria-label="שלח הודעה"
             disabled={!text.trim() || sending}
             className="w-11 h-11 bg-[#E30613] rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 disabled:opacity-40 active:scale-95 transition-all shrink-0"
           >
@@ -176,8 +178,10 @@ export default function Home() {
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
           </button>
-          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-sm">
+          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-[#E30613]/25 focus-within:border-[#E30613] transition-all">
+            <label htmlFor="chat-input" className="sr-only">כתוב הודעה</label>
             <input
+              id="chat-input"
               dir="rtl"
               value={text}
               onChange={e => setText(e.target.value)}

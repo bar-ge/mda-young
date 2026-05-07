@@ -129,7 +129,7 @@ export default function Duty() {
     >
       {(pullY > 0 || pulling) && (
         <div className="flex justify-center transition-all" style={{ height: pulling ? 32 : pullY * 0.5 }}>
-          <div className={`w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full ${pulling ? 'animate-spin' : ''}`}
+          <div className={`w-5 h-5 border-2 border-[#E30613] border-t-transparent rounded-full ${pulling ? 'animate-spin' : ''}`}
             style={{ opacity: pullY / 55, transform: `rotate(${pullY * 4}deg)` }} />
         </div>
       )}
@@ -176,10 +176,14 @@ export default function Duty() {
                     const isAssigning = assigningId === v.id
 
                     return (
-                      <div key={v.id} className="flex flex-col gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/30 p-3.5">
+                      <div key={v.id} className="flex flex-col gap-2.5 rounded-2xl border border-gray-100 bg-gray-50/40 p-3.5">
                         {/* Vehicle name */}
                         <div className="flex items-center justify-between gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center text-base shrink-0">🚑</div>
+                          <div className="w-8 h-8 rounded-xl bg-[#E30613]/10 flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4 text-[#E30613]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                            </svg>
+                          </div>
                           <p className="flex-1 font-bold text-gray-900 text-sm text-right">{v.name}</p>
                         </div>
 
@@ -188,7 +192,7 @@ export default function Duty() {
                           <div className="flex items-center justify-between gap-2 bg-emerald-50 rounded-xl px-3 py-2">
                             {isManager && (
                               <button onClick={() => handleUnassign(shift.id)}
-                                className="text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
+                                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[11px] text-gray-400 hover:text-red-500 font-medium transition-colors">
                                 הסר
                               </button>
                             )}
@@ -203,7 +207,7 @@ export default function Duty() {
                           <div className="flex items-center justify-end gap-2 bg-amber-50 rounded-xl px-3 py-2">
                             {isManager && !isAssigning && (
                               <button onClick={() => setAssigningId(v.id)}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[11px] font-bold text-[#E30613] hover:text-[#B8000F] transition-colors">
                                 + שבץ נהג
                               </button>
                             )}
@@ -218,11 +222,11 @@ export default function Duty() {
                         {isManager && isAssigning && (
                           <div className="flex gap-2 items-center">
                             <button onClick={() => { setAssigningId(null); setDriverText('') }}
-                              className="shrink-0 text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
+                              className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center text-[11px] text-gray-400 hover:text-red-500 font-medium transition-colors">
                               ביטול
                             </button>
                             <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverText.trim()}
-                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
+                              className="shrink-0 px-3 py-2 bg-[#E30613] text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-[#B8000F] transition-all">
                               {saving ? '...' : 'שבץ'}
                             </button>
                             <input
@@ -231,7 +235,7 @@ export default function Duty() {
                               onChange={e => setDriverText(e.target.value)}
                               onKeyDown={e => e.key === 'Enter' && handleAssign(v, selected)}
                               placeholder="שם הנהג"
-                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right"
+                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all text-right"
                             />
                           </div>
                         )}
@@ -239,7 +243,7 @@ export default function Duty() {
                         {/* Reassign link */}
                         {isManager && shift?.driver_name && !isAssigning && (
                           <button onClick={() => { setAssigningId(v.id); setDriverText(shift.driver_name) }}
-                            className="text-[10px] text-blue-500 hover:text-blue-700 font-medium text-right transition-colors">
+                            className="min-h-[44px] flex items-center justify-end text-[11px] text-[#E30613] hover:text-[#B8000F] font-medium transition-colors">
                             החלף נהג
                           </button>
                         )}

@@ -65,7 +65,16 @@
   .animate-slide-up       { animation: slide-up       0.22s ease-out both; }
   .animate-slide-in-right { animation: slide-in-right 0.28s ease-out both; }
   .animate-slide-in-left  { animation: slide-in-left  0.28s ease-out both; }
-  .animate-pop-in         { animation: pop-in         0.35s cubic-bezier(.34,1.56,.64,1) both; }
+  .animate-pop-in         { animation: pop-in         0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slide-up,
+    .animate-slide-in-right,
+    .animate-slide-in-left,
+    .animate-pop-in {
+      animation: none;
+    }
+  }
   .skeleton {
     background: linear-gradient(90deg, #efefef 25%, #e4e4e4 50%, #efefef 75%);
     background-size: 200% 100%;

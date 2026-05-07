@@ -126,7 +126,7 @@ export default function Layout() {
           {/* User + sign-out */}
           <div className="px-4 pb-5 pt-3 border-t border-gray-100 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E30613] to-[#9b000b] flex items-center justify-center shadow-sm shadow-red-500/30 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#E30613] flex items-center justify-center shadow-sm shadow-red-500/30 shrink-0">
                 <span className="text-white font-bold text-xs">{initials}</span>
               </div>
               <div className="flex-1 min-w-0 text-right">
@@ -136,6 +136,7 @@ export default function Layout() {
               <button
                 onClick={signOut}
                 title="התנתק"
+                aria-label="התנתק"
                 className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -157,7 +158,7 @@ export default function Layout() {
               <div className="flex items-center gap-2.5">
                 {profile && (
                   <>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E30613] to-[#9b000b] flex items-center justify-center shadow-sm shadow-red-500/30">
+                    <div className="w-8 h-8 rounded-full bg-[#E30613] flex items-center justify-center shadow-sm shadow-red-500/30">
                       <span className="text-white font-bold text-xs">{initials}</span>
                     </div>
                     <span className="text-xs font-medium text-gray-500 hidden sm:block">{profile.full_name}</span>
