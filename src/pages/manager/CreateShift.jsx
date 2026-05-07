@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -164,7 +164,7 @@ export default function CreateShift({ onShiftCreated }) {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-4">
 
         {/* Template picker (regular only) */}
         {shiftType === 'regular' && templates.length > 0 && (

@@ -38,7 +38,6 @@ const tabs = [
   { id: 'templates',  label: 'תבניות'       },
   { id: 'branches',   label: 'סניפים'       },
   { id: 'blocked',    label: 'חסימות'       },
-  { id: 'audit',      label: 'יומן'         },
 ]
 
 export default function Manager() {
@@ -77,7 +76,7 @@ export default function Manager() {
           </div>
 
           {/* Sub-tabs */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
             {tabs.map(t => (
               <button
                 key={t.id}
@@ -85,10 +84,10 @@ export default function Manager() {
                   setTab(t.id)
                   setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
                 }}
-                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                   tab === t.id
-                    ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
-                    : 'bg-white text-gray-500 border border-gray-200'
+                    ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/25'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
                 <TabIcon id={t.id} />
@@ -107,8 +106,7 @@ export default function Manager() {
             {tab === 'templates'  && <Templates />}
             {tab === 'branches'   && <Branches />}
             {tab === 'blocked'    && <BlockedDates />}
-            {tab === 'audit'      && <AuditLog />}
-          </div>
+                  </div>
 
         </div>
       </div>

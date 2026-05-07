@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const ACTION_LABELS = {
@@ -73,7 +73,7 @@ export default function AuditLog() {
       {loading && logs.length === 0 ? (
         <div className="flex flex-col gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex items-center gap-3">
               <div className="skeleton w-8 h-8 rounded-xl shrink-0" />
               <div className="flex-1 flex flex-col gap-1.5">
                 <div className="skeleton h-3 w-1/2 rounded" />
@@ -95,7 +95,7 @@ export default function AuditLog() {
             const detail = log.details || {}
 
             return (
-              <div key={log.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-start gap-3">
+              <div key={log.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] px-4 py-3 flex items-start gap-3">
                 <span className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-base ${cfg.color}`}>
                   {cfg.icon}
                 </span>

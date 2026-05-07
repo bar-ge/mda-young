@@ -36,13 +36,13 @@ export default function CalendarGrid({
     <div className="w-full h-full flex flex-col gap-3">
       {/* Month navigation */}
       <div className="shrink-0 flex items-center justify-between">
-        <button onClick={onNext} disabled={loading} aria-label="חודש הבא" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
+        <button onClick={onNext} disabled={loading} aria-label="חודש הבא" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="font-bold text-gray-900 text-sm">{monthName}</span>
-        <button onClick={onPrev} disabled={loading} aria-label="חודש קודם" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40">
+        <span className="font-bold text-gray-900 text-sm tracking-tight">{monthName}</span>
+        <button onClick={onPrev} disabled={loading} aria-label="חודש קודם" className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
@@ -50,7 +50,7 @@ export default function CalendarGrid({
       </div>
 
       {/* Grid — flex-1 so it fills all remaining height */}
-      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col">
         <div className="shrink-0 grid grid-cols-7 border-b border-gray-100">
           {DAYS.map(d => (
             <div key={d} className="py-2 text-center text-[10px] font-semibold text-gray-400">{d}</div>
@@ -80,12 +80,12 @@ export default function CalendarGrid({
                 <button
                   key={day}
                   onClick={() => onSelect(isSel ? null : dateStr)}
-                  className={`flex flex-col items-center justify-start pt-1.5 pb-1 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-colors ${
+                  className={`flex flex-col items-center justify-start pt-1.5 pb-1 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     isSel ? 'bg-[#E30613]/5' : 'hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                    isToday ? 'bg-[#E30613] text-white' :
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                    isToday ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/30' :
                     isSel   ? 'bg-[#E30613]/15 text-[#E30613]' :
                               'text-gray-700'
                   }`}>

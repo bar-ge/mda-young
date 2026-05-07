@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
@@ -375,7 +375,7 @@ export default function MonthCalendar({ jumpToDate }) {
       </div>
 
       {/* Calendar grid */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="grid grid-cols-7 border-b border-gray-100">
           {DAYS_HEADER.map(d => (
             <div key={d} className="py-2 text-center text-[10px] font-semibold text-gray-400">{d}</div>
@@ -435,7 +435,7 @@ export default function MonthCalendar({ jumpToDate }) {
 
       {/* Selected day detail */}
       {selected && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
 
           {/* Day header */}
           <div className="flex items-center justify-between gap-2">

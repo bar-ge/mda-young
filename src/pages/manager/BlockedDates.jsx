@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCalendar } from '../../contexts/CalendarContext'
@@ -69,7 +69,7 @@ export default function BlockedDates() {
       </div>
 
       {showForm && (
-        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
           <h3 className="font-semibold text-gray-900 text-sm text-right">חסימת תאריך</h3>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">תאריך *</label>
@@ -127,7 +127,7 @@ export default function BlockedDates() {
             <div className="flex flex-col gap-2">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">עבר</p>
               {past.map(b => (
-                <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3 opacity-50">
+                <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between gap-3 opacity-50">
                   <button onClick={() => remove(b.id)}
                     className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center text-sm shrink-0">×</button>
                   <div className="flex-1 text-right">

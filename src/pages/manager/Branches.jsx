@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function Branches() {
@@ -61,7 +61,7 @@ export default function Branches() {
       </div>
 
       {showForm && (
-        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
           <h3 className="font-semibold text-gray-900 text-sm text-right">הוספת סניף</h3>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">שם הסניף *</label>

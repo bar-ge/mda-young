@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -75,9 +75,11 @@ export default function Profile() {
     <div className="flex flex-col gap-3 pt-3 lg:pt-0 lg:h-[calc(100svh-7.5rem)] lg:overflow-hidden">
 
       {/* Avatar card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-center gap-2 text-center">
-        <div className="w-16 h-16 rounded-full bg-[#E30613] flex items-center justify-center shadow-lg shadow-red-500/20">
-          <span className="text-white font-bold text-xl">{initials}</span>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-5 flex flex-col items-center gap-3 text-center">
+        <div className="p-1 rounded-full bg-[#E30613]/10">
+          <div className="w-16 h-16 rounded-full bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/25">
+            <span className="text-white font-bold text-xl">{initials}</span>
+          </div>
         </div>
         <div className="flex flex-col gap-0.5">
           <h2 className="font-bold text-gray-900 text-lg leading-tight">{profile.full_name}</h2>
@@ -101,7 +103,7 @@ export default function Profile() {
 
       {/* Edit form */}
       {editing ? (
-        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <form onSubmit={save} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
           <h3 className="font-semibold text-gray-900 text-sm text-right">עריכת פרופיל</h3>
 
           <div>
@@ -149,7 +151,7 @@ export default function Profile() {
         </form>
       ) : (
         <button onClick={startEdit}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5 flex items-center justify-between text-sm font-medium text-gray-700 active:bg-gray-50 transition-colors">
+          className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] px-5 py-3.5 flex items-center justify-between text-sm font-medium text-gray-700 active:bg-gray-50 transition-all duration-200">
           <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -163,7 +165,7 @@ export default function Profile() {
       )}
 
       {/* Info rows */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
         {[
           { label: 'אימייל',     value: user?.email, dir: 'ltr' },
           { label: 'טלפון',      value: profile.phone || '—' },

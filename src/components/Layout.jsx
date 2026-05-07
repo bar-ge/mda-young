@@ -90,33 +90,34 @@ export default function Layout() {
       <div className="flex min-h-svh bg-[#f0f2f5]">
 
         {/* ── Desktop sidebar (left) ── */}
-        <aside className="hidden lg:flex flex-col fixed inset-y-0 right-0 w-60 bg-white border-l border-gray-100 shadow-sm z-40">
+        <aside className="hidden lg:flex flex-col fixed inset-y-0 right-0 w-60 bg-white border-l border-gray-100 shadow-[0_0_40px_rgba(0,0,0,0.06)] z-40">
           {/* Brand */}
-          <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/40 shrink-0">
-              <svg viewBox="0 0 20 20" fill="white" className="w-5 h-5">
-                <polygon points="10,1 2.2,14.5 17.8,14.5"/>
-                <polygon points="10,19 2.2,5.5 17.8,5.5"/>
-              </svg>
+          <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100/80 shrink-0">
+            <div className="p-0.5 rounded-[0.65rem] bg-[#E30613]/10 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#E30613] flex items-center justify-center shadow-sm shadow-red-500/30">
+                <svg viewBox="0 0 20 20" fill="white" className="w-[18px] h-[18px]">
+                  <polygon points="10,1 2.2,14.5 17.8,14.5"/>
+                  <polygon points="10,19 2.2,5.5 17.8,5.5"/>
+                </svg>
+              </div>
             </div>
-            <span className="font-bold text-gray-900 text-sm tracking-tight">מד״א צעירים</span>
+            <div>
+              <span className="font-bold text-gray-900 text-sm tracking-tight block">מד״א צעירים</span>
+            </div>
           </div>
 
           {/* Nav links */}
-          <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
             {nav.map(({ to, label, icon }) => (
               <NavLink key={to} to={to}>
                 {({ isActive }) => (
-                  <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer ${
+                  <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer ${
                     isActive
-                      ? 'bg-[#E30613]/10 text-[#E30613]'
+                      ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                   }`}>
                     <div className="shrink-0">{icon(isActive)}</div>
                     <span className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>{label}</span>
-                    {isActive && (
-                      <span className="mr-auto w-1.5 h-1.5 rounded-full bg-[#E30613]" />
-                    )}
                   </div>
                 )}
               </NavLink>
@@ -124,10 +125,12 @@ export default function Layout() {
           </nav>
 
           {/* User + sign-out */}
-          <div className="px-4 pb-5 pt-3 border-t border-gray-100 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E30613] flex items-center justify-center shadow-sm shadow-red-500/30 shrink-0">
-                <span className="text-white font-bold text-xs">{initials}</span>
+          <div className="px-3 pb-4 pt-3 border-t border-gray-100/80 shrink-0">
+            <div className="flex items-center gap-2.5 bg-gray-50/80 rounded-xl px-3 py-2.5">
+              <div className="p-0.5 rounded-full bg-white shadow-sm shrink-0">
+                <div className="w-7 h-7 rounded-full bg-[#E30613] flex items-center justify-center">
+                  <span className="text-white font-bold text-[10px]">{initials}</span>
+                </div>
               </div>
               <div className="flex-1 min-w-0 text-right">
                 <p className="text-xs font-semibold text-gray-900 truncate">{profile?.full_name}</p>
@@ -137,7 +140,7 @@ export default function Layout() {
                 onClick={signOut}
                 title="התנתק"
                 aria-label="התנתק"
-                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -178,18 +181,18 @@ export default function Layout() {
           </header>
 
           {/* Desktop top bar */}
-          <header className="hidden lg:flex sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-gray-100 px-8 h-14 items-center justify-between shrink-0">
+          <header className="hidden lg:flex sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-100/80 px-8 h-14 items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span>מד״א צעירים</span>
-              <span>/</span>
-              <span className="text-gray-700 font-semibold">{title}</span>
+              <span className="font-medium">מד״א צעירים</span>
+              <span className="text-gray-200">/</span>
+              <span className="text-gray-600 font-semibold">{title}</span>
             </div>
-            <h1 className="font-bold text-gray-900 text-base">{title}</h1>
+            <h1 className="font-bold text-gray-900 text-base tracking-tight">{title}</h1>
           </header>
 
           {/* Mobile page title */}
           <div className="lg:hidden max-w-lg mx-auto w-full px-4 pt-5 pb-1">
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">{title}</h1>
           </div>
 
           {/* Content */}
@@ -197,30 +200,32 @@ export default function Layout() {
             <Outlet />
           </main>
 
-          {/* Mobile bottom nav */}
-          <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-gray-100/80 safe-bottom">
-            <div className="max-w-lg mx-auto flex h-16 items-stretch">
-              {nav.map(({ to, label, icon }) => (
-                <NavLink key={to} to={to} className="flex-1">
-                  {({ isActive }) => (
-                    <div className={`h-full flex flex-col items-center justify-center gap-0.5 relative transition-all duration-200 ${
-                      isActive ? 'text-[#E30613]' : 'text-gray-400'
-                    }`}>
-                      {isActive && (
-                        <span className="absolute top-0 inset-x-4 h-0.5 rounded-b-full bg-[#E30613]" />
-                      )}
-                      <div className={`flex items-center justify-center w-11 h-7 rounded-2xl transition-all duration-200 ${
-                        isActive ? 'bg-[#E30613]/10' : ''
+          {/* Mobile bottom nav — floating island */}
+          <nav
+            className="lg:hidden fixed left-4 right-4 z-40"
+            style={{ bottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))' }}
+          >
+            <div className="max-w-sm mx-auto">
+              <div className="flex h-[58px] items-stretch px-1 bg-white/95 backdrop-blur-xl border border-gray-100/80 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.05)]">
+                {nav.map(({ to, label, icon }) => (
+                  <NavLink key={to} to={to} className="flex-1">
+                    {({ isActive }) => (
+                      <div className={`h-full flex flex-col items-center justify-center gap-0.5 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                        isActive ? 'text-[#E30613]' : 'text-gray-400'
                       }`}>
-                        {icon(isActive)}
+                        <div className={`flex items-center justify-center w-10 h-[30px] rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                          isActive ? 'bg-[#E30613]/10' : ''
+                        }`}>
+                          {icon(isActive)}
+                        </div>
+                        <span className={`text-[9px] leading-none transition-all duration-300 ${
+                          isActive ? 'font-bold' : 'font-medium'
+                        }`}>{label}</span>
                       </div>
-                      <span className={`text-[10px] transition-all duration-200 ${
-                        isActive ? 'font-bold' : 'font-medium'
-                      }`}>{label}</span>
-                    </div>
-                  )}
-                </NavLink>
-              ))}
+                    )}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           </nav>
         </div>

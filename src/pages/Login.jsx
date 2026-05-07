@@ -17,10 +17,10 @@ const BD_YEARS  = Array.from(
   (_, i) => String(new Date().getFullYear() - 14 - i)
 )
 
-const INPUT     = "w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all text-right"
-const INPUT_LTR = "w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613] transition-all text-left"
-const BTN_RED   = "w-full py-3.5 bg-[#E30613] text-white font-bold rounded-xl shadow-lg shadow-red-600/35 hover:bg-[#c0000f] active:scale-[0.98] transition-all disabled:opacity-50 text-sm"
-const BTN_GHOST = "flex-1 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 active:scale-[0.98] transition-all"
+const INPUT     = "w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all duration-200 text-right"
+const INPUT_LTR = "w-full px-4 py-3 rounded-2xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all duration-200 text-left"
+const BTN_RED   = "w-full py-3.5 bg-[#E30613] text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 hover:bg-[#c0000f] active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] disabled:opacity-50 text-sm"
+const BTN_GHOST = "flex-1 py-3 border border-gray-200 text-gray-600 font-semibold rounded-2xl text-sm hover:bg-gray-50 active:scale-[0.98] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
 
 /* ─── Small helpers ─── */
 function Spinner({ label }) {
@@ -223,13 +223,16 @@ export default function Login() {
     <div className="min-h-svh flex flex-col items-center justify-center p-5 pb-10" style={BG_STYLE}>
 
       {/* Logo */}
-      <div className="mb-7 flex flex-col items-center gap-3">
+      <div className="mb-8 flex flex-col items-center gap-4">
         <div className="relative">
-          <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-black/30">
-            <svg viewBox="0 0 48 48" fill="#E30613" className="w-10 h-10">
-              <polygon points="24,2 4.95,35 43.05,35"/>
-              <polygon points="24,46 4.95,13 43.05,13"/>
-            </svg>
+          {/* Double-bezel logo */}
+          <div className="p-1.5 rounded-[1.75rem] bg-white/15 ring-1 ring-white/30 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+            <div className="w-20 h-20 rounded-[calc(1.75rem-6px)] bg-white flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]">
+              <svg viewBox="0 0 48 48" fill="#E30613" className="w-10 h-10">
+                <polygon points="24,2 4.95,35 43.05,35"/>
+                <polygon points="24,46 4.95,13 43.05,13"/>
+              </svg>
+            </div>
           </div>
           <div className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-white border-2 border-[#E30613] flex items-center justify-center">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -237,7 +240,7 @@ export default function Login() {
         </div>
         <div className="text-center">
           <h1 className="text-white font-bold text-2xl tracking-tight">מד״א צעירים</h1>
-          <p className="text-white/65 text-sm mt-0.5 font-medium">ניהול משמרות מתנדבים</p>
+          <p className="text-white/55 text-sm mt-0.5 font-medium tracking-wide">ניהול משמרות מתנדבים</p>
         </div>
       </div>
 
@@ -245,8 +248,9 @@ export default function Login() {
 
         {/* ══ SUCCESS ══ */}
         {mode === 'success' && (
-          <div className="animate-pop-in bg-white rounded-3xl shadow-2xl shadow-black/25 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400" />
+          <div className="animate-pop-in p-1.5 rounded-[2rem] bg-white/15 ring-1 ring-white/25 shadow-[0_32px_80px_rgba(0,0,0,0.35)]">
+          <div className="bg-white rounded-[calc(2rem-6px)] overflow-hidden">
+            <div className="h-1 bg-emerald-500" />
             <div className="p-7 flex flex-col items-center gap-5 text-center">
 
               <div className="animate-pop-in w-24 h-24 rounded-full bg-emerald-50 border-4 border-emerald-100 flex items-center justify-center">
@@ -274,12 +278,14 @@ export default function Login() {
               </div>
             </div>
           </div>
+          </div>
         )}
 
         {/* ══ RESET SENT ══ */}
         {mode === 'sent' && (
-          <div className="animate-pop-in bg-white rounded-3xl shadow-2xl shadow-black/25 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400" />
+          <div className="animate-pop-in p-1.5 rounded-[2rem] bg-white/15 ring-1 ring-white/25 shadow-[0_32px_80px_rgba(0,0,0,0.35)]">
+          <div className="bg-white rounded-[calc(2rem-6px)] overflow-hidden">
+            <div className="h-1 bg-sky-500" />
             <div className="p-7 flex flex-col items-center gap-5 text-center">
               <div className="w-24 h-24 rounded-full bg-sky-50 border-4 border-sky-100 flex items-center justify-center">
                 <svg className="w-12 h-12 text-sky-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -295,7 +301,7 @@ export default function Login() {
                 <p className="text-xs text-gray-400 mt-2">אם לא קיבלת, בדוק את תיקיית הספאם</p>
               </div>
               <button onClick={() => switchMode('login')}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-semibold transition-colors">
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-semibold transition-colors duration-200">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -303,23 +309,25 @@ export default function Login() {
               </button>
             </div>
           </div>
+          </div>
         )}
 
         {/* ══ MAIN CARD (login / signup / forgot) ══ */}
         {(mode === 'login' || mode === 'signup' || mode === 'forgot') && (
-          <div className="bg-white rounded-3xl shadow-2xl shadow-black/25 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-[#E30613] via-[#ff2233] to-[#E30613]" />
+          <div className="p-1.5 rounded-[2rem] bg-white/15 ring-1 ring-white/25 shadow-[0_32px_80px_rgba(0,0,0,0.35)]">
+          <div className="bg-white rounded-[calc(2rem-6px)] overflow-hidden">
+            <div className="h-1 bg-[#E30613]" />
 
             <div className="p-6 flex flex-col gap-5">
 
               {/* Mode toggle */}
               {mode !== 'forgot' && (
-                <div className="flex bg-gray-100 rounded-2xl p-1 gap-1">
+                <div className="flex bg-gray-100/80 rounded-2xl p-1 gap-1">
                   {[['login', 'כניסה'], ['signup', 'הרשמה']].map(([m, label]) => (
                     <button key={m} type="button" onClick={() => switchMode(m)}
-                      className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                         mode === m
-                          ? 'bg-white text-gray-900 shadow-sm shadow-black/8'
+                          ? 'bg-white text-gray-900 shadow-sm shadow-black/6'
                           : 'text-gray-400 hover:text-gray-600'
                       }`}>
                       {label}
@@ -543,10 +551,11 @@ export default function Login() {
 
             </div>
           </div>
+          </div>
         )}
       </div>
 
-      <p className="text-white/35 text-xs mt-6 font-medium">מגן דוד אדום — ישראל</p>
+      <p className="text-white/30 text-xs mt-8 font-medium tracking-wide">מגן דוד אדום — ישראל</p>
     </div>
   )
 }

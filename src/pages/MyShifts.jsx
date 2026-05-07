@@ -92,14 +92,14 @@ export default function MyShifts() {
       )}
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 lg:shrink-0">
-        <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-amber-50 -translate-y-4 translate-x-4" />
-          <span className="text-3xl font-black text-amber-500 relative">{pendingCount}</span>
+        <div className="bg-white rounded-2xl border border-amber-100/80 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-1 items-end overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-amber-50 -translate-y-5 translate-x-5 opacity-70" />
+          <span className="text-3xl font-black text-amber-500 relative tracking-tight">{pendingCount}</span>
           <span className="text-xs text-gray-500 font-semibold relative">ממתין לאישור</span>
         </div>
-        <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 flex flex-col gap-1 items-end overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-emerald-50 -translate-y-4 translate-x-4" />
-          <span className="text-3xl font-black text-emerald-600 relative">{confirmedCount}</span>
+        <div className="bg-white rounded-2xl border border-emerald-100/80 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-1 items-end overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-emerald-50 -translate-y-5 translate-x-5 opacity-70" />
+          <span className="text-3xl font-black text-emerald-600 relative tracking-tight">{confirmedCount}</span>
           <span className="text-xs text-gray-500 font-semibold relative">מאושרות</span>
         </div>
       </div>
@@ -133,9 +133,9 @@ export default function MyShifts() {
         <div className="min-w-0 mt-4 lg:mt-0 lg:w-[380px] lg:shrink-0 lg:h-full lg:flex lg:flex-col">
           <div className="hidden lg:block lg:h-11 lg:shrink-0" />
           <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <button onClick={() => setSelected(null)} aria-label="סגור" className="p-2 -m-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={() => setSelected(null)} aria-label="סגור" className="p-2 -m-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

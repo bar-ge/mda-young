@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCalendar } from '../../contexts/CalendarContext'
@@ -52,7 +52,7 @@ function TemplateForm({ initial = emptyForm, branches, onSave, onCancel, saving 
 
   return (
     <form onSubmit={e => { e.preventDefault(); onSave(form) }}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+      className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
 
       <div>
         <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">שם התבנית *</label>
@@ -291,7 +291,7 @@ export default function Templates() {
     <div className="flex flex-col gap-3">
 
       {/* Auto-generate panel */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <select
             value={daysAhead}
@@ -402,7 +402,7 @@ export default function Templates() {
                 onCancel={() => setMode(null)}
               />
             ) : (
-              <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 ${!t.active ? 'opacity-55' : ''}`}>
+              <div className={`bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-2.5 ${!t.active ? 'opacity-55' : ''}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => deleteTemplate(t.id)}

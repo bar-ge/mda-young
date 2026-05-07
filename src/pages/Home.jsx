@@ -172,13 +172,13 @@ export default function Home() {
             type="submit"
             aria-label="שלח הודעה"
             disabled={!text.trim() || sending}
-            className="w-11 h-11 bg-[#E30613] rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 disabled:opacity-40 active:scale-95 transition-all shrink-0"
+            className="w-11 h-11 bg-[#E30613] rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/25 disabled:opacity-40 active:scale-95 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] shrink-0 hover:bg-[#c0000f]"
           >
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
           </button>
-          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-[#E30613]/25 focus-within:border-[#E30613] transition-all">
+          <div className="flex-1 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex items-center shadow-[0_1px_4px_rgba(0,0,0,0.06)] focus-within:ring-2 focus-within:ring-[#E30613]/20 focus-within:border-[#E30613] transition-all duration-200">
             <label htmlFor="chat-input" className="sr-only">כתוב הודעה</label>
             <input
               id="chat-input"

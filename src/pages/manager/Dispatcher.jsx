@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useCalendar } from '../../contexts/CalendarContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -174,7 +174,7 @@ function Approvals({ invalidate }) {
       {loading ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
               <div className="flex items-center justify-end gap-3">
                 <div className="flex flex-col gap-1.5 items-end flex-1">
                   <div className="skeleton h-3.5 w-28 rounded" />
@@ -210,7 +210,7 @@ function Approvals({ invalidate }) {
               (confirmedMap[a.shift_id] || 0) >= shift.max_volunteers
 
             return (
-              <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+              <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
                 <div className="flex items-center justify-end gap-3">
                   <div className="text-right">
                     <p className="font-bold text-gray-900 text-sm">{profile?.full_name || 'מתנדב'}</p>
@@ -386,7 +386,7 @@ function ManualAssignment({ invalidate }) {
       {loading ? (
         <div className="flex flex-col gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="skeleton w-10 h-5 rounded-full" />
@@ -414,7 +414,7 @@ function ManualAssignment({ invalidate }) {
             const isFull         = totalConfirmed >= shift.max_volunteers
 
             return (
-              <div key={shift.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div key={shift.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
                 {/* Shift header — click to expand */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : shift.id)}

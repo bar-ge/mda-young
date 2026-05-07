@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -199,7 +199,7 @@ export default function DutyVehicles() {
           {/* ── VEHICLES ── */}
           {section === 'vehicles' && (
             <div className="flex flex-col gap-4">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4">
                 <p className="text-sm font-bold text-gray-700 text-right mb-3">
                   {editVehicle ? 'עריכת רכב' : 'הוספת רכב חדש'}
                 </p>
@@ -229,7 +229,7 @@ export default function DutyVehicles() {
                   <p className="text-gray-400 text-sm text-center py-4">אין רכבים פעילים</p>
                 )}
                 {vehicles.map(v => (
-                  <div key={v.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex items-start gap-3">
+                  <div key={v.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-3.5 flex items-start gap-3">
                     <div className="flex gap-2 shrink-0 pt-0.5">
                       <button onClick={() => startEdit(v)} className="text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">עריכה</button>
                       <button onClick={() => deactivateVehicle(v.id, v.name)} className="text-xs text-gray-400 hover:text-red-500 font-medium transition-colors">הסר</button>
@@ -257,7 +257,7 @@ export default function DutyVehicles() {
           {/* ── HOURS ── */}
           {section === 'hours' && (
             <div className="flex flex-col gap-4">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4">
                 <p className="text-sm font-bold text-gray-700 text-right mb-3">הוספת כוננות ספציפית</p>
                 <form onSubmit={saveShift} className="flex flex-col gap-2.5">
                   <select value={sVehicle} onChange={e => setSVehicle(e.target.value)} required className={SELECT}>
@@ -287,7 +287,7 @@ export default function DutyVehicles() {
                 <p className="text-xs font-bold text-gray-400 text-right">כוננויות קרובות</p>
                 {shifts.length === 0 && <p className="text-gray-400 text-sm text-center py-4">אין כוננויות קרובות</p>}
                 {shifts.map(s => (
-                  <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex items-center gap-3">
+                  <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-3.5 flex items-center gap-3">
                     <button onClick={() => cancelShift(s.id)} className="text-xs text-gray-400 hover:text-red-500 font-medium transition-colors shrink-0">ביטול</button>
                     <div className="flex-1 text-right">
                       <p className="font-bold text-gray-900 text-sm">{s.duty_vehicles?.name}</p>
@@ -307,7 +307,7 @@ export default function DutyVehicles() {
           {/* ── ASSIGN DRIVER ── */}
           {section === 'assign' && (
             <div className="flex flex-col gap-4">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4">
                 <p className="text-sm font-bold text-gray-700 text-right mb-3">שיבוץ נהג לכוננות</p>
                 <form onSubmit={assignDriver} className="flex flex-col gap-2.5">
                   <select value={aShift} onChange={e => setAShift(e.target.value)} required className={SELECT}>
