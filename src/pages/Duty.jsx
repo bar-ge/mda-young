@@ -134,17 +134,6 @@ export default function Duty() {
         </div>
       )}
 
-      {/* All vehicles list (collapsed summary) */}
-      {!selected && !loading && vehicles.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end lg:shrink-0">
-          {vehicles.map(v => (
-            <span key={v.id} className="flex items-center gap-1.5 bg-white border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              {v.name}
-            </span>
-          ))}
-        </div>
-      )}
 
       <div className="lg:flex lg:gap-6 lg:flex-1 lg:min-h-0">
         <div className={`min-w-0 lg:h-full lg:overflow-hidden ${selected ? 'lg:flex-1' : 'lg:w-full'}`}>
