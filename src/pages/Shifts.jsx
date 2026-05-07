@@ -48,41 +48,43 @@ export default function Shifts() {
 
   async function load() {
     setLoading(true)
-    const from    = isoDate(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0).getDate()
-    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
+    try {
+      const from    = isoDate(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0).getDate()
+      const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: sh }, { data: as }, { data: bl }] = await Promise.all([
-      supabase.from('shifts').select('*')
-        .gte('start_time', from).lte('start_time', to)
-        .order('start_time'),
-      supabase.from('shift_assignments').select('*').eq('user_id', user.id),
-      supabase.from('blocked_dates').select('date, reason')
-        .gte('date', from).lte('date', to.slice(0, 10)),
-    ])
-    if (sh) setShifts(sh)
-    if (as) {
-      const map = {}
-      as.forEach(a => { map[a.shift_id] = a })
-      setMyAssignments(map)
-    }
-    if (bl) setBlocked(bl)
-
-    const shiftIds = sh?.map(s => s.id) || []
-    if (shiftIds.length) {
-      const { data: confirmed } = await supabase
-        .from('shift_assignments')
-        .select('shift_id')
-        .eq('status', 'confirmed')
-        .in('shift_id', shiftIds)
-      if (confirmed) {
-        const cmap = {}
-        confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
-        setConfirmedMap(cmap)
+      const [{ data: sh }, { data: as }, { data: bl }] = await Promise.all([
+        supabase.from('shifts').select('*')
+          .gte('start_time', from).lte('start_time', to)
+          .order('start_time'),
+        supabase.from('shift_assignments').select('*').eq('user_id', user.id),
+        supabase.from('blocked_dates').select('date, reason')
+          .gte('date', from).lte('date', to.slice(0, 10)),
+      ])
+      if (sh) setShifts(sh)
+      if (as) {
+        const map = {}
+        as.forEach(a => { map[a.shift_id] = a })
+        setMyAssignments(map)
       }
-    }
+      if (bl) setBlocked(bl)
 
-    setLoading(false)
+      const shiftIds = sh?.map(s => s.id) || []
+      if (shiftIds.length) {
+        const { data: confirmed } = await supabase
+          .from('shift_assignments')
+          .select('shift_id')
+          .eq('status', 'confirmed')
+          .in('shift_id', shiftIds)
+        if (confirmed) {
+          const cmap = {}
+          confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+          setConfirmedMap(cmap)
+        }
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function applyForShift(shiftId) {

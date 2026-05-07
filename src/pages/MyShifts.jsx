@@ -34,13 +34,16 @@ export default function MyShifts() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase
-      .from('shift_assignments')
-      .select('*, shifts(*)')
-      .eq('user_id', user.id)
-      .order('assigned_at', { ascending: false })
-    if (data) setAssignments(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('shift_assignments')
+        .select('*, shifts(*)')
+        .eq('user_id', user.id)
+        .order('assigned_at', { ascending: false })
+      if (data) setAssignments(data)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function onTouchStart(e) { touchStartY.current = e.touches[0].clientY }

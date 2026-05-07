@@ -70,67 +70,69 @@ export default function MonthCalendar({ jumpToDate }) {
 
   async function load() {
     setLoading(true)
-    const from    = isoDate(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0).getDate()
-    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
+    try {
+      const from    = isoDate(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0).getDate()
+      const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: sh }, { data: bl }] = await Promise.all([
-      supabase.from('shifts')
-        .select('id, title, description, start_time, end_time, status, shift_type, location, veteran_only, max_volunteers')
-        .gte('start_time', from).lte('start_time', to).order('start_time'),
-      supabase.from('blocked_dates').select('date, reason')
-        .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
-    ])
-
-    if (sh) setShifts(sh)
-    if (bl) setBlocked(bl)
-
-    const shiftIds = sh?.map(s => s.id) || []
-    if (shiftIds.length) {
-      const [{ data: ma }, { data: ca }] = await Promise.all([
-        supabase.from('shift_assignments')
-          .select('id, shift_id, manual_name')
-          .not('manual_name', 'is', null)
-          .in('shift_id', shiftIds),
-        supabase.from('shift_assignments')
-          .select('id, shift_id, user_id')
-          .eq('status', 'confirmed')
-          .is('manual_name', null)
-          .in('shift_id', shiftIds),
+      const [{ data: sh }, { data: bl }] = await Promise.all([
+        supabase.from('shifts')
+          .select('id, title, description, start_time, end_time, status, shift_type, location, veteran_only, max_volunteers')
+          .gte('start_time', from).lte('start_time', to).order('start_time'),
+        supabase.from('blocked_dates').select('date, reason')
+          .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
       ])
 
-      if (ma) {
-        const mmap = {}
-        ma.forEach(a => {
-          if (!mmap[a.shift_id]) mmap[a.shift_id] = []
-          mmap[a.shift_id].push(a)
-        })
-        setManualMap(mmap)
-      }
+      if (sh) setShifts(sh)
+      if (bl) setBlocked(bl)
 
-      if (ca && ca.length) {
-        const userIds = [...new Set(ca.map(a => a.user_id).filter(Boolean))]
-        const { data: profiles } = userIds.length
-          ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
-          : { data: [] }
-        const pm = {}
-        profiles?.forEach(p => { pm[p.id] = p })
+      const shiftIds = sh?.map(s => s.id) || []
+      if (shiftIds.length) {
+        const [{ data: ma }, { data: ca }] = await Promise.all([
+          supabase.from('shift_assignments')
+            .select('id, shift_id, manual_name')
+            .not('manual_name', 'is', null)
+            .in('shift_id', shiftIds),
+          supabase.from('shift_assignments')
+            .select('id, shift_id, user_id')
+            .eq('status', 'confirmed')
+            .is('manual_name', null)
+            .in('shift_id', shiftIds),
+        ])
 
-        const cmap = {}
-        ca.forEach(a => {
-          if (!cmap[a.shift_id]) cmap[a.shift_id] = []
-          cmap[a.shift_id].push({ id: a.id, name: pm[a.user_id]?.full_name || 'מתנדב' })
-        })
-        setConfirmedMap(cmap)
+        if (ma) {
+          const mmap = {}
+          ma.forEach(a => {
+            if (!mmap[a.shift_id]) mmap[a.shift_id] = []
+            mmap[a.shift_id].push(a)
+          })
+          setManualMap(mmap)
+        }
+
+        if (ca && ca.length) {
+          const userIds = [...new Set(ca.map(a => a.user_id).filter(Boolean))]
+          const { data: profiles } = userIds.length
+            ? await supabase.from('profiles').select('id, full_name').in('id', userIds)
+            : { data: [] }
+          const pm = {}
+          profiles?.forEach(p => { pm[p.id] = p })
+
+          const cmap = {}
+          ca.forEach(a => {
+            if (!cmap[a.shift_id]) cmap[a.shift_id] = []
+            cmap[a.shift_id].push({ id: a.id, name: pm[a.user_id]?.full_name || 'מתנדב' })
+          })
+          setConfirmedMap(cmap)
+        } else {
+          setConfirmedMap({})
+        }
       } else {
+        setManualMap({})
         setConfirmedMap({})
       }
-    } else {
-      setManualMap({})
-      setConfirmedMap({})
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   function deleteShift(shiftId) {

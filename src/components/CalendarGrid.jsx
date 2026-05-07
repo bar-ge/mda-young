@@ -19,6 +19,7 @@ export default function CalendarGrid({
 
   const shiftMap = {}
   shifts.forEach(s => {
+    if (typeof s.start_time !== 'string') return
     const d = s.start_time.slice(0, 10)
     if (!shiftMap[d]) shiftMap[d] = []
     shiftMap[d].push(s)

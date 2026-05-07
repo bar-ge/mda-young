@@ -163,7 +163,7 @@ export default function Login() {
   /* ── Forgot password ── */
   async function handleForgot(e) {
     e.preventDefault()
-    if (!form.email.includes('@')) { setError('נא להזין כתובת אימייל תקינה'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('נא להזין כתובת אימייל תקינה'); return }
     setLoading(true); setError('')
     const { error: err } = await supabase.auth.resetPasswordForEmail(form.email, {
       redirectTo: window.location.origin,
@@ -182,7 +182,7 @@ export default function Login() {
       if (!signupPwd) { setError('נא למלא תאריך לידה מלא'); return false }
     }
     if (step === 3) {
-      if (!form.email.includes('@')) { setError('נא להזין כתובת אימייל תקינה'); return false }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('נא להזין כתובת אימייל תקינה'); return false }
     }
     return true
   }

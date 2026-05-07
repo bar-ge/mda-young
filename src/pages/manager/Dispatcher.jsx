@@ -43,42 +43,44 @@ function Approvals({ invalidate }) {
 
   async function load() {
     setLoading(true)
-    let q = supabase
-      .from('shift_assignments')
-      .select('*, shifts(*)')
-      .is('manual_name', null)          // exclude manual assignments
-      .order('assigned_at', { ascending: false })
+    try {
+      let q = supabase
+        .from('shift_assignments')
+        .select('*, shifts(*)')
+        .is('manual_name', null)
+        .order('assigned_at', { ascending: false })
 
-    if (filter === 'pending') q = q.eq('status', 'pending')
-    else                      q = q.in('status', ['confirmed', 'declined'])
+      if (filter === 'pending') q = q.eq('status', 'pending')
+      else                      q = q.in('status', ['confirmed', 'declined'])
 
-    const { data: rows } = await q
-    if (!rows?.length) {
-      setAssignments([])
-      if (filter !== 'pending') await refreshPendingCount()
+      const { data: rows } = await q
+      if (!rows?.length) {
+        setAssignments([])
+        if (filter !== 'pending') await refreshPendingCount()
+        return
+      }
+
+      const userIds  = [...new Set(rows.map(a => a.user_id).filter(Boolean))]
+      const shiftIds = [...new Set(rows.map(a => a.shift_id).filter(Boolean))]
+
+      const [{ data: profiles }, { data: confirmed }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, phone').in('id', userIds),
+        supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
+      ])
+
+      const pm = {}
+      profiles?.forEach(p => { pm[p.id] = p })
+      setAssignments(rows.map(a => ({ ...a, profile: pm[a.user_id] })))
+
+      const cmap = {}
+      confirmed?.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+      setConfirmedMap(cmap)
+
+      if (filter === 'pending') setPendingCount(rows.length)
+      else                      await refreshPendingCount()
+    } finally {
       setLoading(false)
-      return
     }
-
-    const userIds  = [...new Set(rows.map(a => a.user_id).filter(Boolean))]
-    const shiftIds = [...new Set(rows.map(a => a.shift_id).filter(Boolean))]
-
-    const [{ data: profiles }, { data: confirmed }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, phone').in('id', userIds),
-      supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
-    ])
-
-    const pm = {}
-    profiles?.forEach(p => { pm[p.id] = p })
-    setAssignments(rows.map(a => ({ ...a, profile: pm[a.user_id] })))
-
-    const cmap = {}
-    confirmed?.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
-    setConfirmedMap(cmap)
-
-    if (filter === 'pending') setPendingCount(rows.length)
-    else                      await refreshPendingCount()
-    setLoading(false)
   }
 
   async function refreshPendingCount() {

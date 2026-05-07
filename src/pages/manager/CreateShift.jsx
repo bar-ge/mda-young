@@ -103,7 +103,6 @@ export default function CreateShift({ onShiftCreated }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
-    setSuccess('')
     setError('')
 
     if (!isHoliday && new Date(form.end_time) <= new Date(form.start_time)) {
