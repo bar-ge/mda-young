@@ -298,42 +298,44 @@ function ManualAssignment({ invalidate }) {
 
   async function load() {
     setLoading(true)
-    const from    = isoDate(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0).getDate()
-    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
+    try {
+      const now     = new Date().toISOString()
+      const lastDay = new Date(year, month + 1, 0).getDate()
+      const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const { data: sh } = await supabase.from('shifts')
-      .select('id, title, start_time, end_time, location, status, shift_type, veteran_only, max_volunteers')
-      .gte('start_time', from).lte('start_time', to)
-      .neq('shift_type', 'holiday')
-      .neq('status', 'cancelled')
-      .order('start_time')
+      const { data: sh } = await supabase.from('shifts')
+        .select('id, title, start_time, end_time, location, status, shift_type, veteran_only, max_volunteers')
+        .gte('start_time', now).lte('start_time', to)
+        .neq('shift_type', 'holiday')
+        .neq('status', 'cancelled')
+        .order('start_time')
 
-    const shiftIds = sh?.map(s => s.id) || []
+      const shiftIds = sh?.map(s => s.id) || []
 
-    const [{ data: ma }, { data: confirmed }] = shiftIds.length ? await Promise.all([
-      supabase.from('shift_assignments').select('*').not('manual_name', 'is', null).in('shift_id', shiftIds),
-      supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
-    ]) : [{ data: [] }, { data: [] }]
+      const [{ data: ma }, { data: confirmed }] = shiftIds.length ? await Promise.all([
+        supabase.from('shift_assignments').select('*').not('manual_name', 'is', null).in('shift_id', shiftIds),
+        supabase.from('shift_assignments').select('shift_id').eq('status', 'confirmed').in('shift_id', shiftIds),
+      ]) : [{ data: [] }, { data: [] }]
 
-    if (sh) setShifts(sh)
+      if (sh) setShifts(sh)
 
-    if (ma) {
-      const map = {}
-      ma.forEach(a => {
-        if (!map[a.shift_id]) map[a.shift_id] = []
-        map[a.shift_id].push(a)
-      })
-      setManualMap(map)
+      if (ma) {
+        const map = {}
+        ma.forEach(a => {
+          if (!map[a.shift_id]) map[a.shift_id] = []
+          map[a.shift_id].push(a)
+        })
+        setManualMap(map)
+      }
+
+      if (confirmed) {
+        const cmap = {}
+        confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
+        setConfirmedMap(cmap)
+      }
+    } finally {
+      setLoading(false)
     }
-
-    if (confirmed) {
-      const cmap = {}
-      confirmed.forEach(a => { cmap[a.shift_id] = (cmap[a.shift_id] || 0) + 1 })
-      setConfirmedMap(cmap)
-    }
-
-    setLoading(false)
   }
 
   async function addManual(shiftId) {

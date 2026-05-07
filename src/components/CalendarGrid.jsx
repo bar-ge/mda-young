@@ -93,12 +93,9 @@ export default function CalendarGrid({
                   </span>
                   {dayShifts.length > 0 && (
                     <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
-                      {dayShifts.slice(0, 3).map((s, i) => (
+                      {dayShifts.map((s, i) => (
                         <span key={i} className={`w-1.5 h-1.5 rounded-full ${dotFn(s)}`} />
                       ))}
-                      {dayShifts.length > 3 && (
-                        <span className="text-[8px] text-gray-400 leading-none">+{dayShifts.length - 3}</span>
-                      )}
                     </div>
                   )}
                   {dayCount != null && (
