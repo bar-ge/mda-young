@@ -1,23 +1,33 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
+import { useToast } from '../contexts/ToastContext'
 import CalendarGrid, { isoDate } from '../components/CalendarGrid'
 
-function formatHour(ts) {
-  return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
-}
+const DAY_LABELS = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳']
 
 function vehicleDot() { return 'bg-blue-500' }
 
 export default function Duty() {
+  const { profile } = useAuth()
+  const { toast } = useToast()
   const { year, month, prevMonth, nextMonth, refreshKey } = useCalendar()
-  const [shifts,   setShifts]   = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [selected, setSelected] = useState(null)
-  const [pulling,  setPulling]  = useState(false)
-  const [pullY,    setPullY]    = useState(0)
+
+  const [vehicles,    setVehicles]    = useState([])
+  const [monthShifts, setMonthShifts] = useState([])
+  const [drivers,     setDrivers]     = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [selected,    setSelected]    = useState(null)
+  const [assigningId, setAssigningId] = useState(null) // vehicle.id being assigned
+  const [driverSel,   setDriverSel]   = useState('')
+  const [saving,      setSaving]      = useState(false)
+  const [pulling,     setPulling]     = useState(false)
+  const [pullY,       setPullY]       = useState(0)
   const touchStartY  = useRef(0)
   const containerRef = useRef(null)
+
+  const isManager = profile?.role === 'admin' || profile?.role === 'dispatcher'
 
   useEffect(() => { load() }, [year, month, refreshKey])
 
@@ -27,15 +37,19 @@ export default function Duty() {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const { data } = await supabase
-      .from('duty_shifts')
-      .select('*, duty_vehicles(*), driver:profiles!duty_shifts_driver_id_fkey(id,full_name,phone)')
-      .gte('start_time', from)
-      .lte('start_time', to)
-      .neq('status', 'cancelled')
-      .order('start_time')
-
-    if (data) setShifts(data)
+    const [{ data: veh }, { data: sh }, { data: drv }] = await Promise.all([
+      supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+      supabase.from('duty_shifts')
+        .select('*, driver:profiles!duty_shifts_driver_id_fkey(id,full_name)')
+        .gte('start_time', from).lte('start_time', to)
+        .neq('status', 'cancelled'),
+      isManager
+        ? supabase.from('profiles').select('id,full_name').order('full_name')
+        : Promise.resolve({ data: [] }),
+    ])
+    if (veh) setVehicles(veh)
+    if (sh)  setMonthShifts(sh)
+    if (drv) setDrivers(drv)
     setLoading(false)
   }
 
@@ -50,19 +64,63 @@ export default function Duty() {
     setPullY(0)
   }
 
-  // build calendar-compatible objects (need start_time at top level)
-  const calShifts = shifts.map(s => ({ ...s, start_time: s.start_time }))
+  // Assign driver: upsert duty_shift for vehicle+date
+  async function handleAssign(vehicle, dateStr) {
+    if (!driverSel) return
+    setSaving(true)
+    const existing = monthShifts.find(s => s.vehicle_id === vehicle.id && s.start_time.slice(0, 10) === dateStr)
+    let error
+    if (existing) {
+      ;({ error } = await supabase.from('duty_shifts')
+        .update({ driver_id: driverSel, status: 'assigned' }).eq('id', existing.id))
+    } else {
+      ;({ error } = await supabase.from('duty_shifts').insert({
+        vehicle_id: vehicle.id,
+        driver_id:  driverSel,
+        start_time: `${dateStr}T07:00:00`,
+        end_time:   `${dateStr}T19:00:00`,
+        status:     'assigned',
+      }))
+    }
+    setSaving(false)
+    if (error) { toast('שגיאה בשיבוץ', { type: 'error' }); return }
+    toast('הנהג שובץ בהצלחה', { type: 'success' })
+    setAssigningId(null); setDriverSel('')
+    load()
+  }
 
-  const selectedShifts = selected
-    ? shifts.filter(s => s.start_time.slice(0, 10) === selected)
-    : []
+  async function handleUnassign(shiftId) {
+    const { error } = await supabase.from('duty_shifts')
+      .update({ driver_id: null, status: 'open' }).eq('id', shiftId)
+    if (!error) { toast('שיבוץ בוטל'); load() }
+    else toast('שגיאה', { type: 'error' })
+  }
 
-  // count per date for calendar badge
+  // Build calendar dots: for each day in month, create virtual entries per available vehicle
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const calShifts = []
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = isoDate(year, month, d)
+    const weekday = new Date(dateStr + 'T12:00:00').getDay()
+    vehicles.forEach(v => {
+      if ((v.available_days || []).includes(weekday)) {
+        calShifts.push({ id: `${v.id}-${dateStr}`, start_time: dateStr + 'T00:00:00' })
+      }
+    })
+  }
+
+  // Count vehicles per day for badge
   const countMap = {}
-  shifts.forEach(s => {
+  calShifts.forEach(s => {
     const d = s.start_time.slice(0, 10)
     countMap[d] = (countMap[d] || 0) + 1
   })
+
+  // Vehicles available on the selected day (by weekday)
+  const selectedWeekday = selected ? new Date(selected + 'T12:00:00').getDay() : -1
+  const selectedVehicles = selected
+    ? vehicles.filter(v => (v.available_days || []).includes(selectedWeekday))
+    : []
 
   return (
     <div
@@ -79,13 +137,17 @@ export default function Duty() {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="flex items-center justify-end gap-3 lg:shrink-0">
-        <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
-          <span className="w-2 h-2 rounded-full bg-blue-500" />
-          כוננות
-        </span>
-      </div>
+      {/* All vehicles list (collapsed summary) */}
+      {!selected && !loading && vehicles.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-end lg:shrink-0">
+          {vehicles.map(v => (
+            <span key={v.id} className="flex items-center gap-1.5 bg-white border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              {v.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="lg:flex lg:gap-6 lg:flex-1 lg:min-h-0">
         <div className={`min-w-0 lg:h-full lg:overflow-hidden ${selected ? 'lg:flex-1' : 'lg:w-full'}`}>
@@ -97,7 +159,7 @@ export default function Duty() {
             dotFn={vehicleDot}
             loading={loading}
             selected={selected}
-            onSelect={setSelected}
+            onSelect={d => { setSelected(d); setAssigningId(null); setDriverSel('') }}
             countMap={countMap}
           />
         </div>
@@ -108,6 +170,7 @@ export default function Duty() {
             <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto scrollbar-hide">
 
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+                {/* Header */}
                 <div className="flex items-center justify-between">
                   <button onClick={() => setSelected(null)} aria-label="סגור" className="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -119,51 +182,99 @@ export default function Duty() {
                   </span>
                 </div>
 
-                {selectedShifts.length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-3">אין כוננות ביום זה</p>
+                {selectedVehicles.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-3">אין רכבי כונן ביום זה</p>
                 ) : (
-                  selectedShifts.map(shift => {
-                    const v = shift.duty_vehicles
+                  selectedVehicles.map(v => {
+                    const shift = monthShifts.find(s => s.vehicle_id === v.id && s.start_time.slice(0, 10) === selected)
+                    const isAssigning = assigningId === v.id
+
                     return (
-                      <div key={shift.id} className="flex flex-col gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/30 p-3.5">
+                      <div key={v.id} className="flex flex-col gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/30 p-3.5">
                         {/* Vehicle name */}
-                        <div className="text-right">
-                          <p className="font-bold text-gray-900 text-sm">{v?.name}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center text-base shrink-0">🚑</div>
+                          <p className="flex-1 font-bold text-gray-900 text-sm text-right">{v.name}</p>
                         </div>
 
-                        {/* Time */}
-                        <div className="flex items-center justify-end gap-1.5 text-xs text-gray-500">
-                          <span>{formatHour(shift.start_time)} – {formatHour(shift.end_time)}</span>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                          </svg>
-                        </div>
-
-                        {/* Driver */}
-                        <div className={`flex items-center justify-end gap-2 rounded-xl px-3 py-2 ${
-                          shift.driver ? 'bg-emerald-50' : 'bg-amber-50'
-                        }`}>
-                          {shift.driver ? (
-                            <>
-                              <span className="text-xs text-emerald-700 font-medium">{shift.driver.full_name}</span>
-                              <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16z" fill="currentColor" className="text-emerald-500"/>
+                        {/* Driver status */}
+                        {shift?.driver ? (
+                          <div className="flex items-center justify-between gap-2 bg-emerald-50 rounded-xl px-3 py-2">
+                            {isManager && (
+                              <button onClick={() => handleUnassign(shift.id)}
+                                className="text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
+                                הסר
+                              </button>
+                            )}
+                            <div className="flex items-center gap-1.5 mr-auto">
+                              <span className="text-xs text-emerald-700 font-semibold">{shift.driver.full_name}</span>
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/>
                               </svg>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-xs text-amber-700 font-medium">לא שובץ נהג</span>
-                              <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                              </svg>
-                            </>
-                          )}
-                        </div>
-
-                        {shift.notes && (
-                          <p className="text-gray-400 text-xs text-right">{shift.notes}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2 bg-amber-50 rounded-xl px-3 py-2">
+                            {isManager && !isAssigning && (
+                              <button onClick={() => { setAssigningId(v.id); setDriverSel('') }}
+                                className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                                + שבץ נהג
+                              </button>
+                            )}
+                            <span className="text-xs text-amber-700 font-medium">לא שובץ נהג</span>
+                            <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                            </svg>
+                          </div>
                         )}
+
+                        {/* Inline assign form */}
+                        {isManager && isAssigning && (
+                          <div className="flex gap-2">
+                            <button onClick={() => { setAssigningId(null); setDriverSel('') }}
+                              className="shrink-0 px-3 py-2 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-all">
+                              ביטול
+                            </button>
+                            <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverSel}
+                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
+                              {saving ? '...' : 'שבץ'}
+                            </button>
+                            <select value={driverSel} onChange={e => setDriverSel(e.target.value)}
+                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right">
+                              <option value="">בחר נהג</option>
+                              {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* If assigned driver exists and manager wants to reassign */}
+                        {isManager && shift?.driver && !isAssigning && (
+                          <button onClick={() => { setAssigningId(v.id); setDriverSel('') }}
+                            className="text-[10px] text-blue-500 hover:text-blue-700 font-medium text-right transition-colors">
+                            החלף נהג
+                          </button>
+                        )}
+
+                        {/* If reassigning existing */}
+                        {isManager && isAssigning && shift?.driver && (
+                          <div className="flex gap-2">
+                            <button onClick={() => { setAssigningId(null); setDriverSel('') }}
+                              className="shrink-0 px-3 py-2 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-all">
+                              ביטול
+                            </button>
+                            <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverSel}
+                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
+                              {saving ? '...' : 'שנה'}
+                            </button>
+                            <select value={driverSel} onChange={e => setDriverSel(e.target.value)}
+                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right">
+                              <option value="">בחר נהג</option>
+                              {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        {v.notes && <p className="text-gray-400 text-xs text-right">{v.notes}</p>}
                       </div>
                     )
                   })
