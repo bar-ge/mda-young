@@ -20,7 +20,6 @@ export default function Duty() {
   const [loading,     setLoading]     = useState(true)
   const [selected,    setSelected]    = useState(null)
   const [assigningId, setAssigningId] = useState(null) // vehicle.id being assigned
-  const [driverSel,   setDriverSel]   = useState('')
   const [saving,      setSaving]      = useState(false)
   const [pulling,     setPulling]     = useState(false)
   const [pullY,       setPullY]       = useState(0)
@@ -65,18 +64,17 @@ export default function Duty() {
   }
 
   // Assign driver: upsert duty_shift for vehicle+date
-  async function handleAssign(vehicle, dateStr) {
-    if (!driverSel) return
+  async function handleAssign(vehicle, dateStr, driverId) {
     setSaving(true)
     const existing = monthShifts.find(s => s.vehicle_id === vehicle.id && s.start_time.slice(0, 10) === dateStr)
     let error
     if (existing) {
       ;({ error } = await supabase.from('duty_shifts')
-        .update({ driver_id: driverSel, status: 'assigned' }).eq('id', existing.id))
+        .update({ driver_id: driverId, status: 'assigned' }).eq('id', existing.id))
     } else {
       ;({ error } = await supabase.from('duty_shifts').insert({
         vehicle_id: vehicle.id,
-        driver_id:  driverSel,
+        driver_id:  driverId,
         start_time: `${dateStr}T07:00:00`,
         end_time:   `${dateStr}T19:00:00`,
         status:     'assigned',
@@ -85,7 +83,7 @@ export default function Duty() {
     setSaving(false)
     if (error) { toast('שגיאה בשיבוץ', { type: 'error' }); return }
     toast('הנהג שובץ בהצלחה', { type: 'success' })
-    setAssigningId(null); setDriverSel('')
+    setAssigningId(null)
     load()
   }
 
@@ -159,7 +157,7 @@ export default function Duty() {
             dotFn={vehicleDot}
             loading={loading}
             selected={selected}
-            onSelect={d => { setSelected(d); setAssigningId(null); setDriverSel('') }}
+            onSelect={d => { setSelected(d); setAssigningId(null) }}
             countMap={countMap}
           />
         </div>
@@ -216,7 +214,7 @@ export default function Duty() {
                         ) : (
                           <div className="flex items-center justify-end gap-2 bg-amber-50 rounded-xl px-3 py-2">
                             {isManager && !isAssigning && (
-                              <button onClick={() => { setAssigningId(v.id); setDriverSel('') }}
+                              <button onClick={() => { setAssigningId(v.id) }}
                                 className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
                                 + שבץ נהג
                               </button>
@@ -228,50 +226,34 @@ export default function Duty() {
                           </div>
                         )}
 
-                        {/* Inline assign form */}
+                        {/* Inline driver list */}
                         {isManager && isAssigning && (
-                          <div className="flex gap-2">
-                            <button onClick={() => { setAssigningId(null); setDriverSel('') }}
-                              className="shrink-0 px-3 py-2 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-all">
-                              ביטול
-                            </button>
-                            <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverSel}
-                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
-                              {saving ? '...' : 'שבץ'}
-                            </button>
-                            <select value={driverSel} onChange={e => setDriverSel(e.target.value)}
-                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right">
-                              <option value="">בחר נהג</option>
-                              {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
-                            </select>
+                          <div className="flex flex-col gap-1 rounded-xl border border-blue-100 bg-white overflow-hidden">
+                            <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                              <button onClick={() => { setAssigningId(null); setDriverSel('') }}
+                                className="text-[10px] text-gray-400 hover:text-red-500 font-medium transition-colors">
+                                ביטול
+                              </button>
+                              <span className="text-[10px] font-bold text-gray-400">בחר נהג</span>
+                            </div>
+                            {drivers.map((d, i) => (
+                              <button key={d.id} onClick={() => handleAssign(v, selected, d.id)}
+                                disabled={saving}
+                                className={`flex items-center justify-end gap-2 px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-blue-50 active:bg-blue-100 transition-colors text-right disabled:opacity-40 ${
+                                  i !== drivers.length - 1 ? 'border-b border-gray-50' : ''
+                                }`}>
+                                {d.full_name}
+                              </button>
+                            ))}
                           </div>
                         )}
 
-                        {/* If assigned driver exists and manager wants to reassign */}
+                        {/* Reassign link (when driver already set) */}
                         {isManager && shift?.driver && !isAssigning && (
-                          <button onClick={() => { setAssigningId(v.id); setDriverSel('') }}
+                          <button onClick={() => { setAssigningId(v.id) }}
                             className="text-[10px] text-blue-500 hover:text-blue-700 font-medium text-right transition-colors">
                             החלף נהג
                           </button>
-                        )}
-
-                        {/* If reassigning existing */}
-                        {isManager && isAssigning && shift?.driver && (
-                          <div className="flex gap-2">
-                            <button onClick={() => { setAssigningId(null); setDriverSel('') }}
-                              className="shrink-0 px-3 py-2 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-all">
-                              ביטול
-                            </button>
-                            <button onClick={() => handleAssign(v, selected)} disabled={saving || !driverSel}
-                              className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl disabled:opacity-40 hover:bg-blue-700 transition-all">
-                              {saving ? '...' : 'שנה'}
-                            </button>
-                            <select value={driverSel} onChange={e => setDriverSel(e.target.value)}
-                              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right">
-                              <option value="">בחר נהג</option>
-                              {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
-                            </select>
-                          </div>
                         )}
 
                         {v.notes && <p className="text-gray-400 text-xs text-right">{v.notes}</p>}
