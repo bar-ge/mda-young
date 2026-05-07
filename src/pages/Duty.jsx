@@ -30,20 +30,23 @@ export default function Duty() {
 
   async function load() {
     setLoading(true)
-    const from    = isoDate(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0).getDate()
-    const to      = isoDate(year, month, lastDay) + 'T23:59:59'
+    try {
+      const from    = isoDate(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0).getDate()
+      const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
-    const [{ data: veh }, { data: sh }] = await Promise.all([
-      supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
-      supabase.from('duty_shifts')
-        .select('*, driver:profiles!duty_shifts_driver_id_fkey(id,full_name)')
-        .gte('start_time', from).lte('start_time', to)
-        .neq('status', 'cancelled'),
-    ])
-    if (veh) setVehicles(veh)
-    if (sh)  setMonthShifts(sh)
-    setLoading(false)
+      const [{ data: veh }, { data: sh }] = await Promise.all([
+        supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+        supabase.from('duty_shifts')
+          .select('id, vehicle_id, status, start_time, end_time, driver_name')
+          .gte('start_time', from).lte('start_time', to)
+          .neq('status', 'cancelled'),
+      ])
+      if (veh) setVehicles(veh)
+      if (sh)  setMonthShifts(sh)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function onTouchStart(e) { touchStartY.current = e.touches[0].clientY }
@@ -85,7 +88,7 @@ export default function Duty() {
 
   async function handleUnassign(shiftId) {
     const { error } = await supabase.from('duty_shifts')
-      .update({ driver_id: null, driver_name: null, status: 'open' }).eq('id', shiftId)
+      .update({ driver_name: null, status: 'open' }).eq('id', shiftId)
     if (!error) { toast('שיבוץ בוטל'); load() }
     else toast('שגיאה', { type: 'error' })
   }

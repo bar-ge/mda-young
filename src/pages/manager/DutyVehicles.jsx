@@ -70,19 +70,22 @@ export default function DutyVehicles() {
 
   async function loadAll() {
     setLoading(true)
-    const [{ data: veh }, { data: sh }, { data: drv }] = await Promise.all([
-      supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
-      supabase.from('duty_shifts')
-        .select('*, duty_vehicles(name), driver:profiles!duty_shifts_driver_id_fkey(id,full_name)')
-        .gte('start_time', new Date().toISOString().slice(0, 10))
-        .neq('status', 'cancelled')
-        .order('start_time'),
-      supabase.from('profiles').select('id,full_name').order('full_name'),
-    ])
-    if (veh) setVehicles(veh)
-    if (sh)  setShifts(sh)
-    if (drv) setDrivers(drv)
-    setLoading(false)
+    try {
+      const [{ data: veh }, { data: sh }, { data: drv }] = await Promise.all([
+        supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+        supabase.from('duty_shifts')
+          .select('*, duty_vehicles(name), driver_name')
+          .gte('start_time', new Date().toISOString().slice(0, 10))
+          .neq('status', 'cancelled')
+          .order('start_time'),
+        supabase.from('profiles').select('id,full_name').order('full_name'),
+      ])
+      if (veh) setVehicles(veh)
+      if (sh)  setShifts(sh)
+      if (drv) setDrivers(drv)
+    } finally {
+      setLoading(false)
+    }
   }
 
   /* ── Vehicles ── */
@@ -146,10 +149,10 @@ export default function DutyVehicles() {
   /* ── Assign driver ── */
   async function assignDriver(e) {
     e.preventDefault()
-    if (!aShift || !aDriver) return
+    if (!aShift || !aDriver.trim()) return
     setSaving(true)
     const { error } = await supabase.from('duty_shifts')
-      .update({ driver_id: aDriver, status: 'assigned' }).eq('id', aShift)
+      .update({ driver_name: aDriver.trim(), status: 'assigned' }).eq('id', aShift)
     setSaving(false)
     if (error) { toast('שגיאה בשיבוץ', { type: 'error' }); return }
     toast('הנהג שובץ בהצלחה', { type: 'success' })
@@ -159,7 +162,7 @@ export default function DutyVehicles() {
 
   async function unassignDriver(shiftId) {
     const { error } = await supabase.from('duty_shifts')
-      .update({ driver_id: null, status: 'open' }).eq('id', shiftId)
+      .update({ driver_name: null, status: 'open' }).eq('id', shiftId)
     if (!error) { toast('שיבוץ בוטל'); loadAll() }
     else toast('שגיאה', { type: 'error' })
   }
@@ -313,11 +316,9 @@ export default function DutyVehicles() {
                       </option>
                     ))}
                   </select>
-                  <select value={aDriver} onChange={e => setADriver(e.target.value)} required className={SELECT}>
-                    <option value="">בחר נהג *</option>
-                    {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
-                  </select>
-                  <button type="submit" disabled={saving || !aShift || !aDriver}
+                  <input value={aDriver} onChange={e => setADriver(e.target.value)}
+                    placeholder="שם הנהג *" required className={INPUT} />
+                  <button type="submit" disabled={saving || !aShift || !aDriver.trim()}
                     className="py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-sm shadow-blue-500/25 hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50">
                     {saving ? '...' : 'שבץ נהג'}
                   </button>
@@ -329,9 +330,9 @@ export default function DutyVehicles() {
                 {shifts.length === 0 && <p className="text-gray-400 text-sm text-center py-4">אין כוננויות</p>}
                 {shifts.map(s => (
                   <div key={s.id} className={`bg-white rounded-2xl border shadow-sm p-3.5 flex items-center gap-3 ${
-                    s.driver ? 'border-emerald-100' : 'border-gray-100'
+                    s.driver_name ? 'border-emerald-100' : 'border-gray-100'
                   }`}>
-                    {s.driver && (
+                    {s.driver_name && (
                       <button onClick={() => unassignDriver(s.id)} className="text-xs text-gray-400 hover:text-red-500 font-medium transition-colors shrink-0">הסר</button>
                     )}
                     <div className="flex-1 text-right">
@@ -339,9 +340,9 @@ export default function DutyVehicles() {
                       <p className="text-xs text-gray-400 mt-0.5">{formatDate(s.start_time)} · {formatHour(s.start_time)}–{formatHour(s.end_time)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      {s.driver ? (
+                      {s.driver_name ? (
                         <div className="flex flex-col items-end">
-                          <span className="text-xs font-bold text-emerald-700">{s.driver.full_name}</span>
+                          <span className="text-xs font-bold text-emerald-700">{s.driver_name}</span>
                           <span className="text-[10px] text-emerald-500">משובץ</span>
                         </div>
                       ) : (
