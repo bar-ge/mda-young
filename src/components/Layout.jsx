@@ -79,7 +79,7 @@ export default function Layout() {
 
   const isManager = profile?.role === 'admin' || profile?.role === 'dispatcher'
   const nav = isManager
-    ? [...volunteerNav.slice(0, 2), managerExtra, volunteerNav[2]]
+    ? [...volunteerNav.slice(0, 3), managerExtra]
     : volunteerNav
 
   const title    = pageTitles[location.pathname] || 'מד״א צעירים'

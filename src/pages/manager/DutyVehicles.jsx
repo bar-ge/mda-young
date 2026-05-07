@@ -3,13 +3,6 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 
-const VEHICLE_TYPES = [
-  { value: 'ambulance',  label: 'אמבולנס' },
-  { value: 'car',        label: 'רכב'     },
-  { value: 'motorcycle', label: 'אופנוע'  },
-  { value: 'other',      label: 'אחר'     },
-]
-
 const INPUT = "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-right"
 const SELECT = INPUT + " appearance-none"
 
@@ -34,8 +27,6 @@ export default function DutyVehicles() {
 
   // Vehicle form
   const [vName,   setVName]   = useState('')
-  const [vPlate,  setVPlate]  = useState('')
-  const [vType,   setVType]   = useState('ambulance')
   const [vNotes,  setVNotes]  = useState('')
   const [editVehicle, setEditVehicle] = useState(null)
 
@@ -74,14 +65,14 @@ export default function DutyVehicles() {
     e.preventDefault()
     if (!vName.trim()) return
     setSaving(true)
-    const payload = { name: vName.trim(), plate: vPlate.trim() || null, vehicle_type: vType, notes: vNotes.trim() || null }
+    const payload = { name: vName.trim(), notes: vNotes.trim() || null }
     const { error } = editVehicle
       ? await supabase.from('duty_vehicles').update(payload).eq('id', editVehicle.id)
       : await supabase.from('duty_vehicles').insert(payload)
     setSaving(false)
     if (error) { toast('שגיאה בשמירה', { type: 'error' }); return }
     toast(editVehicle ? 'הרכב עודכן' : 'הרכב נוסף', { type: 'success' })
-    setVName(''); setVPlate(''); setVType('ambulance'); setVNotes(''); setEditVehicle(null)
+    setVName(''); setVNotes(''); setEditVehicle(null)
     loadAll()
   }
 
@@ -92,7 +83,7 @@ export default function DutyVehicles() {
   }
 
   function startEdit(v) {
-    setEditVehicle(v); setVName(v.name); setVPlate(v.plate || ''); setVType(v.vehicle_type); setVNotes(v.notes || '')
+    setEditVehicle(v); setVName(v.name); setVNotes(v.notes || '')
     setSection('vehicles')
   }
 
@@ -179,18 +170,11 @@ export default function DutyVehicles() {
                 <form onSubmit={saveVehicle} className="flex flex-col gap-2.5">
                   <input value={vName} onChange={e=>setVName(e.target.value)}
                     placeholder="שם הרכב *" required className={INPUT} />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input value={vPlate} onChange={e=>setVPlate(e.target.value)}
-                      placeholder="לוחית רישוי" className={INPUT} />
-                    <select value={vType} onChange={e=>setVType(e.target.value)} className={SELECT}>
-                      {VEHICLE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
                   <input value={vNotes} onChange={e=>setVNotes(e.target.value)}
                     placeholder="הערות" className={INPUT} />
                   <div className="flex gap-2">
                     {editVehicle && (
-                      <button type="button" onClick={() => { setEditVehicle(null); setVName(''); setVPlate(''); setVType('ambulance'); setVNotes('') }}
+                      <button type="button" onClick={() => { setEditVehicle(null); setVName(''); setVNotes('') }}
                         className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-all">
                         ביטול
                       </button>
@@ -222,12 +206,7 @@ export default function DutyVehicles() {
                     </div>
                     <div className="flex-1 text-right">
                       <p className="font-bold text-gray-900 text-sm">{v.name}</p>
-                      <div className="flex items-center justify-end gap-2 mt-0.5">
-                        {v.plate && <span className="text-xs text-gray-400">{v.plate}</span>}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold">
-                          {VEHICLE_TYPES.find(t=>t.value===v.vehicle_type)?.label || v.vehicle_type}
-                        </span>
-                      </div>
+                      {v.notes && <p className="text-xs text-gray-400 mt-0.5">{v.notes}</p>}
                     </div>
                     <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg shrink-0">🚑</div>
                   </div>

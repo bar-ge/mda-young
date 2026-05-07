@@ -7,13 +7,6 @@ function formatHour(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
 
-const VEHICLE_TYPE_LABELS = {
-  ambulance: 'אמבולנס',
-  car:       'רכב',
-  motorcycle:'אופנוע',
-  other:     'אחר',
-}
-
 function vehicleDot() { return 'bg-blue-500' }
 
 export default function Duty() {
@@ -133,15 +126,9 @@ export default function Duty() {
                     const v = shift.duty_vehicles
                     return (
                       <div key={shift.id} className="flex flex-col gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/30 p-3.5">
-                        {/* Vehicle name + type */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                            {VEHICLE_TYPE_LABELS[v?.vehicle_type] || 'רכב'}
-                          </span>
-                          <div className="text-right">
-                            <p className="font-bold text-gray-900 text-sm">{v?.name}</p>
-                            {v?.plate && <p className="text-gray-400 text-xs">{v.plate}</p>}
-                          </div>
+                        {/* Vehicle name */}
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900 text-sm">{v?.name}</p>
                         </div>
 
                         {/* Time */}
