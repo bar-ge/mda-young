@@ -43,7 +43,7 @@ export function ToastProvider({ children }) {
                                      'bg-gray-900 shadow-gray-900/20'
             }`}
           >
-            <span className="flex-1 leading-snug">{message}</span>
+            <span className="flex-1 leading-snug">{t.message}</span>
             {t.action && (
               <button
                 onClick={() => { t.action.fn(); dismiss(t.id) }}

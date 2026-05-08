@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Component } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import Layout from './components/Layout'
@@ -8,6 +9,35 @@ import MyShifts from './pages/MyShifts'
 import Duty from './pages/Duty'
 import Profile from './pages/Profile'
 import Manager from './pages/Manager'
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false } }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-[#f0f2f5]">
+          <div className="flex flex-col items-center gap-5 text-center px-6">
+            <div className="w-16 h-16 rounded-2xl bg-[#E30613]/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#E30613]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="font-bold text-gray-900 text-base">משהו השתבש</p>
+              <p className="text-sm text-gray-400">רענן את הדף כדי להמשיך</p>
+            </div>
+            <button onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-[#E30613] text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-500/20 active:scale-[0.98] transition-all">
+              רענון
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -38,6 +68,7 @@ function Splash() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
@@ -60,5 +91,6 @@ export default function App() {
       </BrowserRouter>
       </ToastProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
