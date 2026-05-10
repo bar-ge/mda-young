@@ -1,5 +1,6 @@
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { AuthProvider, useAuth } from '../../contexts/AuthContext'
 
 describe('AuthContext', () => {
@@ -9,13 +10,13 @@ describe('AuthContext', () => {
 
   it('should render without crashing', () => {
     const TestComponent = () => <div>Auth Test</div>
-    
+
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
     )
-    
+
     expect(screen.getByText('Auth Test')).toBeInTheDocument()
   })
 
@@ -34,3 +35,4 @@ describe('AuthContext', () => {
     expect(screen.getByText(/logged out/i)).toBeInTheDocument()
   })
 })
+
