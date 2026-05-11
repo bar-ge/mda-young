@@ -98,20 +98,21 @@ export default function Duty() {
     if (!weekGridRef.current) return
     setExporting(true)
     try {
-      const html2canvas = (await import('html2canvas')).default
-      const canvas = await html2canvas(weekGridRef.current, {
-        scale: 2,
-        useCORS: true,
+      const { toPng } = await import('html-to-image')
+      const url = await toPng(weekGridRef.current, {
+        pixelRatio: 2,
         backgroundColor: '#ffffff',
-        logging: false,
+        style: { borderRadius: '0' },
       })
-      const url = canvas.toDataURL('image/png')
       const a = document.createElement('a')
       a.href = url
       a.download = `כוננות-${formatDM(weekStart)}-${formatDM(addDays(weekStart,6))}.png`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       toast('לוח הכוננות יוצא בהצלחה')
-    } catch {
+    } catch (err) {
+      console.error('Export PNG error:', err)
       toast('שגיאה בייצוא', { type: 'error' })
     } finally {
       setExporting(false)
