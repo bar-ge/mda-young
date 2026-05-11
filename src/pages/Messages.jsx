@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 
-const TARGET_LABELS = { all: 'לכולם', driver: 'נהגים', volunteer: 'מתנדבים' }
+const TARGET_LABELS = { all: 'לכולם', driver: 'נהגים', volunteer: 'נוער' }
 const TARGET_COLORS = {
   all:       'bg-sky-50 text-sky-600',
   driver:    'bg-emerald-50 text-emerald-700',
@@ -102,7 +102,7 @@ export default function Messages() {
             {[
               { val: 'all',       label: 'לכולם'     },
               { val: 'driver',    label: 'נהגים'     },
-              { val: 'volunteer', label: 'מתנדבים'   },
+              { val: 'volunteer', label: 'נוער'       },
             ].map(({ val, label }) => (
               <button key={val}
                 onClick={() => setForm(f => ({ ...f, target_role: val }))}
