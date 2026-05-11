@@ -159,9 +159,13 @@ export default function Messages() {
       ) : (
         <div className="flex flex-col gap-3">
           {messages.map(msg => (
-            <div key={msg.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-2.5">
+            <div key={msg.id} dir="rtl" className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-2.5">
               <div className="flex items-start justify-between gap-2">
+                <p className="font-bold text-gray-900 text-sm leading-snug">{msg.title}</p>
                 <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TARGET_COLORS[msg.target_role]}`}>
+                    {TARGET_LABELS[msg.target_role]}
+                  </span>
                   {isManager && (
                     <button
                       onClick={() => handleDelete(msg.id)}
@@ -174,18 +178,14 @@ export default function Messages() {
                       </svg>
                     </button>
                   )}
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TARGET_COLORS[msg.target_role]}`}>
-                    {TARGET_LABELS[msg.target_role]}
-                  </span>
                 </div>
-                <p className="font-bold text-gray-900 text-sm text-right leading-snug">{msg.title}</p>
               </div>
 
-              <p className="text-gray-600 text-sm text-right leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
 
               <div className="flex items-center justify-between pt-1.5 border-t border-gray-50">
-                <span className="text-[10px] text-gray-300 font-medium" dir="ltr">{formatDate(msg.created_at)}</span>
                 <span className="text-[10px] text-gray-400 font-medium">{msg.created_by_name}</span>
+                <span className="text-[10px] text-gray-300 font-medium" dir="ltr">{formatDate(msg.created_at)}</span>
               </div>
             </div>
           ))}
