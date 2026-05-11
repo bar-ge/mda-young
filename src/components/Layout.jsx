@@ -48,6 +48,16 @@ const volunteerNav = [
   },
 ]
 
+const messagesNav = {
+  to: '/messages',
+  label: 'הודעות',
+  icon: (active) => (
+    <svg viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  ),
+}
+
 const managerExtra = {
   to: '/manager',
   label: 'ניהול',
@@ -63,6 +73,7 @@ const pageTitles = {
   '/shifts':    'משמרות',
   '/my-shifts': 'המשמרות שלי',
   '/duty':      'כוננים',
+  '/messages':  'הודעות תחנה',
   '/profile':   'פרופיל',
   '/manager':   'ניהול',
 }
@@ -74,12 +85,12 @@ const roleLabels = {
   driver:     'נהג',
 }
 
-// nav items without duty (volunteer)
-const baseNav = [volunteerNav[0], volunteerNav[1], volunteerNav[3]]
-// nav items with duty but no manager (driver)
-const driverNav = [volunteerNav[0], volunteerNav[1], volunteerNav[2], volunteerNav[3]]
-// nav items with duty + manager, no profile (admin/dispatcher)
-const managerNav = [volunteerNav[0], volunteerNav[1], volunteerNav[2], managerExtra]
+// shifts, my-shifts, messages, profile
+const volunteerFullNav = [volunteerNav[0], volunteerNav[1], messagesNav, volunteerNav[3]]
+// duty, messages, profile
+const driverFullNav = [volunteerNav[2], messagesNav, volunteerNav[3]]
+// shifts, duty, messages, manager
+const managerNav = [volunteerNav[0], volunteerNav[2], messagesNav, managerExtra]
 
 export default function Layout() {
   const { profile, signOut } = useAuth()
@@ -87,7 +98,7 @@ export default function Layout() {
 
   const role = profile?.role
   const isManager = role === 'admin' || role === 'dispatcher'
-  const nav = isManager ? managerNav : role === 'driver' ? driverNav : baseNav
+  const nav = isManager ? managerNav : role === 'driver' ? driverFullNav : volunteerFullNav
 
   const title    = pageTitles[location.pathname] || 'מד״א צעירים'
   const initials = profile?.full_name?.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'

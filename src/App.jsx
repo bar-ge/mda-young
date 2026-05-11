@@ -9,6 +9,7 @@ import MyShifts from './pages/MyShifts'
 import Duty from './pages/Duty'
 import Profile from './pages/Profile'
 import Manager from './pages/Manager'
+import Messages from './pages/Messages'
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false } }
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="shifts"    element={<Shifts />} />
             <Route path="my-shifts" element={<MyShifts />} />
             <Route path="duty"      element={<Duty />} />
+            <Route path="messages"  element={<Messages />} />
             <Route path="manager"   element={<Manager />} />
             <Route path="profile"   element={<Profile />} />
           </Route>
