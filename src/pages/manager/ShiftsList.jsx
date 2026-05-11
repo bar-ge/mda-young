@@ -103,10 +103,17 @@ export default function ShiftsList({ typeFilter = null }) {
 
   const monthName = new Date(year, month, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })
 
+  const now = new Date()
+  function effectiveStatus(s) {
+    const past = new Date(s.end_time || s.start_time) < now
+    return past && s.status === 'open' ? 'cancelled' : s.status
+  }
+
   const filtered = shifts.filter(s => {
     if (typeFilter && s.shift_type !== typeFilter) return false
-    if (filter === 'open')   return s.status !== 'cancelled'
-    if (filter === 'closed') return s.status === 'cancelled'
+    const eff = effectiveStatus(s)
+    if (filter === 'open')   return eff !== 'cancelled'
+    if (filter === 'closed') return eff === 'cancelled'
     return true
   })
 
@@ -143,7 +150,8 @@ export default function ShiftsList({ typeFilter = null }) {
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map(shift => {
-            const cfg       = statusCfg[shift.status] || statusCfg.open
+            const eff       = effectiveStatus(shift)
+            const cfg       = statusCfg[eff] || statusCfg.open
             const confirmed = countMap[shift.id] || 0
             const isFull    = shift.max_volunteers > 0 && confirmed >= shift.max_volunteers
             const isExpanded = expandedId === shift.id
@@ -151,7 +159,7 @@ export default function ShiftsList({ typeFilter = null }) {
 
             return (
               <div key={shift.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-                shift.status === 'cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'
+                eff === 'cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'
               }`}>
                 {/* Clickable row */}
                 <button
@@ -183,7 +191,7 @@ export default function ShiftsList({ typeFilter = null }) {
                     </div>
                     {/* Right: title */}
                     <div className="text-right">
-                      <p className={`font-semibold text-sm ${shift.status === 'cancelled' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      <p className={`font-semibold text-sm ${eff === 'cancelled' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
                         {shift.title}
                       </p>
                     </div>
