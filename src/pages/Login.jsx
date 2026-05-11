@@ -195,23 +195,19 @@ export default function Login() {
       const { data, error: err } = await supabase.auth.signUp({
         email: form.email,
         password: signupPwd,
-        options: { data: { full_name: form.full_name, phone: form.phone } },
+        options: { data: { full_name: form.full_name.trim(), phone: form.phone.trim() || null } },
       })
       if (err) throw err
-      if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          full_name: form.full_name.trim(),
-          phone: form.phone.trim() || null,
-          birth_date: birthISO || null,
-          role: 'volunteer',
-        })
+      if (data.user && birthISO) {
+        await supabase.from('profiles').update({ birth_date: birthISO }).eq('id', data.user.id)
       }
       setMode('success')
     } catch (err) {
       setError(
         err.message?.includes('already registered') ? 'האימייל כבר קיים — נסה להתחבר' :
+        err.message?.includes('User already registered') ? 'האימייל כבר קיים — נסה להתחבר' :
         err.message?.includes('Password should be') ? 'תאריך לידה שגוי' :
+        err.message?.includes('signup') ? 'ההרשמה אינה זמינה כרגע' :
         'שגיאה ברישום — נסה שנית'
       )
     }
