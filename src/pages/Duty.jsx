@@ -226,9 +226,9 @@ export default function Duty() {
           }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          ייצוא שבועי
+          תצוגה שבועית
         </button>
       </div>
 
@@ -365,26 +365,28 @@ export default function Duty() {
             )}
           </div>
 
-          {/* Export button */}
-          <button
-            onClick={exportPng}
-            disabled={exporting || weekLoading || vehicles.length === 0}
-            className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#E30613] text-white font-bold rounded-2xl shadow-sm shadow-red-500/25 disabled:opacity-50 active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] lg:shrink-0"
-          >
-            {exporting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                מייצא...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                שמור כתמונה (PNG)
-              </>
-            )}
-          </button>
+          {/* Export button — managers only */}
+          {isManager && (
+            <button
+              onClick={exportPng}
+              disabled={exporting || weekLoading || vehicles.length === 0}
+              className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#E30613] text-white font-bold rounded-2xl shadow-sm shadow-red-500/25 disabled:opacity-50 active:scale-[0.98] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] lg:shrink-0"
+            >
+              {exporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  מייצא...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  שמור כתמונה (PNG)
+                </>
+              )}
+            </button>
+          )}
         </div>
 
       ) : (

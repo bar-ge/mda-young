@@ -71,16 +71,23 @@ const roleLabels = {
   admin:      'מנהל',
   dispatcher: 'סדרן',
   volunteer:  'מתנדב',
+  driver:     'נהג',
 }
+
+// nav items without duty (volunteer)
+const baseNav = [volunteerNav[0], volunteerNav[1], volunteerNav[3]]
+// nav items with duty but no manager (driver)
+const driverNav = [volunteerNav[0], volunteerNav[1], volunteerNav[2], volunteerNav[3]]
+// nav items with duty + manager, no profile (admin/dispatcher)
+const managerNav = [volunteerNav[0], volunteerNav[1], volunteerNav[2], managerExtra]
 
 export default function Layout() {
   const { profile, signOut } = useAuth()
   const location = useLocation()
 
-  const isManager = profile?.role === 'admin' || profile?.role === 'dispatcher'
-  const nav = isManager
-    ? [...volunteerNav.slice(0, 3), managerExtra]
-    : volunteerNav
+  const role = profile?.role
+  const isManager = role === 'admin' || role === 'dispatcher'
+  const nav = isManager ? managerNav : role === 'driver' ? driverNav : baseNav
 
   const title    = pageTitles[location.pathname] || 'מד״א צעירים'
   const initials = profile?.full_name?.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
