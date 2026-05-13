@@ -22,6 +22,7 @@ const RESOURCE_FIELDS = [
   { key: 'ops_manager_count', label: 'ס. מנהל'   },
   { key: 'atv_count',         label: 'טרקטורון'  },
   { key: 'paramedic_count',   label: 'פרמדיק'    },
+  { key: 'taran',             label: 'תאר"ן'      },
 ]
 
 function Stepper({ label, value, onChange }) {
@@ -96,7 +97,7 @@ const EMPTY_FORM = {
   motorcycle_count: 0, asn_count: 0, white_amb_count: 0, amb_4x4_count: 0,
   als_tent_count: 0, er_team_count: 0, hq_rep_count: 0, commander_count: 0,
   emt_count: 0, ops_manager_count: 0, atv_count: 0, paramedic_count: 0,
-  taran: '',
+  taran: 0,
 }
 
 export default function CreateShift({ onShiftCreated }) {
@@ -186,7 +187,7 @@ export default function CreateShift({ onShiftCreated }) {
         ops_manager_count: form.ops_manager_count,
         atv_count:         form.atv_count,
         paramedic_count:   form.paramedic_count,
-        taran:             form.taran.trim() || null,
+        taran:             form.taran,
       } : {}),
     }
 
@@ -343,13 +344,6 @@ export default function CreateShift({ onShiftCreated }) {
                   </div>
                 </div>
 
-                {/* Taran */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 text-right">תאר"ן</label>
-                  <input value={form.taran} onChange={e => set('taran', e.target.value)}
-                    placeholder='הערות נוספות...'
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#E30613]/30 focus:border-[#E30613]" />
-                </div>
               </>
             )}
 

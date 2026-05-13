@@ -13,6 +13,7 @@ export const RESOURCE_COLS = [
   { key: 'ops_manager_count', label: 'ס. מנהל'    },
   { key: 'atv_count',         label: 'טרקטורון'   },
   { key: 'paramedic_count',   label: 'פרמדיק'     },
+  { key: 'taran',             label: 'תאר"ן'       },
 ]
 
 function fmt(ts) {
@@ -49,7 +50,6 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
         <tr style={{ background: '#1e3a5f' }}>
           {['תאריך','משעה','עד שעה','מיקום','אופי האירוע','צפי קהל',
             ...RESOURCE_COLS.map(c => c.label),
-            'תאר"ן',
           ].map(h => <th key={h} style={TH}>{h}</th>)}
         </tr>
       </thead>
@@ -71,7 +71,6 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
             {RESOURCE_COLS.map(c => (
               <td key={c.key} style={TD}>{ev[c.key] || ''}</td>
             ))}
-            <td style={TDR}>{ev.taran || ''}</td>
           </tr>
         ))}
       </tbody>

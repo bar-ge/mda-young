@@ -419,14 +419,12 @@ export default function ShiftsList({ typeFilter = null }) {
                             ['ס. מנהל',shift.ops_manager_count],
                             ['טרקטורון',shift.atv_count],
                             ['פרמדיק', shift.paramedic_count],
+                            ['תאר"ן',  shift.taran],
                           ].filter(([, v]) => v > 0).map(([label, val]) => (
                             <span key={label} className="text-[10px] bg-white border border-gray-200 rounded-lg px-2 py-1 font-medium text-gray-700">
                               {label}: <span className="text-[#E30613] font-bold">{val}</span>
                             </span>
                           ))}
-                          {shift.taran && (
-                            <span className="text-[10px] text-gray-500 w-full mt-1">תאר"ן: {shift.taran}</span>
-                          )}
                         </div>
                       </div>
                     )}
