@@ -45,6 +45,7 @@ export default function Profile() {
   async function save(e) {
     e.preventDefault()
     if (!form.full_name.trim()) { setError('שם מלא הוא שדה חובה'); return }
+    if (form.phone.trim() && !/^[+]?[\d\s\-]{9,15}$/.test(form.phone.trim())) { setError('מספר טלפון לא תקין — לדוגמה: 050-1234567'); return }
     setSaving(true)
     setError('')
     const { error: err } = await supabase
