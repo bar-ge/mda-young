@@ -64,9 +64,14 @@ export default function ShiftsList({ typeFilter = null }) {
   const [exportEvents,   setExportEvents]   = useState([])
   const [exportLoading,  setExportLoading]  = useState(false)
   const [exporting,      setExporting]      = useState(false)
+  const [printing,       setPrinting]       = useState(false)
   const exportRef = useRef(null)
 
+  const PAGE_SIZE = 20
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
   useEffect(() => { load() }, [year, month, refreshKey])
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [filter, shifts])
 
   // sync export year/month when calendar changes
   useEffect(() => { setExportYear(year); setExportMonth(month) }, [year, month])
@@ -125,6 +130,22 @@ export default function ShiftsList({ typeFilter = null }) {
       .order('start_time')
     setExportEvents(data || [])
     setExportLoading(false)
+  }
+
+  async function handlePrint() {
+    if (!exportRef.current) return
+    setPrinting(true)
+    try {
+      const html = exportRef.current.outerHTML
+      const win = window.open('', '_blank', 'width=1200,height=800')
+      win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>אירועים – ${exportTitle}</title><style>body{margin:24px;font-family:Arial,sans-serif}</style></head><body>${html}</body></html>`)
+      win.document.close()
+      win.focus()
+      win.print()
+      win.close()
+    } finally {
+      setPrinting(false)
+    }
   }
 
   async function handleExport() {
@@ -281,18 +302,31 @@ export default function ShiftsList({ typeFilter = null }) {
                 )}
               </div>
 
-              {/* Export button */}
-              <button
-                onClick={handleExport}
-                disabled={exporting || exportLoading}
-                className="w-full py-3 bg-[#E30613] text-white font-bold rounded-xl shadow-sm shadow-red-500/20 disabled:opacity-40 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2"
-              >
-                {exporting ? (
-                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> מייצא...</>
-                ) : (
-                  <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>ייצוא PNG</>
-                )}
-              </button>
+              {/* Export buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExport}
+                  disabled={exporting || exportLoading}
+                  className="flex-1 py-3 bg-[#E30613] text-white font-bold rounded-xl shadow-sm shadow-red-500/20 disabled:opacity-40 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2"
+                >
+                  {exporting ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> מייצא...</>
+                  ) : (
+                    <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>PNG</>
+                  )}
+                </button>
+                <button
+                  onClick={handlePrint}
+                  disabled={printing || exportLoading}
+                  className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2"
+                >
+                  {printing ? (
+                    <><div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> מדפיס...</>
+                  ) : (
+                    <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>הדפסה</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
@@ -333,7 +367,7 @@ export default function ShiftsList({ typeFilter = null }) {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {filtered.map(shift => {
+          {filtered.slice(0, visibleCount).map(shift => {
             const eff       = effectiveStatus(shift)
             const cfg       = statusCfg[eff] || statusCfg.open
             const confirmed = countMap[shift.id] || 0
@@ -479,6 +513,14 @@ export default function ShiftsList({ typeFilter = null }) {
               </div>
             )
           })}
+          {visibleCount < filtered.length && (
+            <button
+              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              className="w-full py-2.5 text-sm font-semibold text-gray-500 bg-white border border-gray-200 rounded-2xl active:bg-gray-50 transition-all"
+            >
+              הצג עוד ({filtered.length - visibleCount} נוספים)
+            </button>
+          )}
         </div>
       )}
     </div>

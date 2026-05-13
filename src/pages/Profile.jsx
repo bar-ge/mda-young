@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import pkg from '../../package.json'
 
 const roleLabels = {
   admin:      'מנהל',
@@ -191,7 +192,7 @@ export default function Profile() {
         </svg>
       </button>
 
-      <p className="text-center text-xs text-gray-300 pb-2">מד״א צעירים v1.0</p>
+      <p className="text-center text-xs text-gray-300 pb-2">מד״א צעירים v{pkg.version}</p>
     </div>
   )
 }

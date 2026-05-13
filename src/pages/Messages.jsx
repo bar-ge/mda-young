@@ -31,10 +31,16 @@ export default function Messages() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('station_messages')
       .select('*')
       .order('created_at', { ascending: false })
+
+    if (!isManager && profile?.role) {
+      query = query.or(`target_role.eq.all,target_role.eq.${profile.role}`)
+    }
+
+    const { data } = await query
     if (data) setMessages(data)
     setLoading(false)
   }

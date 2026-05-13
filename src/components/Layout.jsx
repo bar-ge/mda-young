@@ -48,6 +48,17 @@ const volunteerNav = [
   },
 ]
 
+const driverVehiclesNav = {
+  to: '/driver-vehicles',
+  label: 'רכבי כונן',
+  icon: (active) => (
+    <svg viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/>
+      <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+  ),
+}
+
 const messagesNav = {
   to: '/messages',
   label: 'הודעות',
@@ -70,12 +81,13 @@ const managerExtra = {
 }
 
 const pageTitles = {
-  '/shifts':    'משמרות',
-  '/my-shifts': 'המשמרות שלי',
-  '/duty':      'כוננים',
-  '/messages':  'הודעות תחנה',
-  '/profile':   'פרופיל',
-  '/manager':   'ניהול',
+  '/shifts':           'משמרות',
+  '/my-shifts':        'המשמרות שלי',
+  '/duty':             'כוננים',
+  '/messages':         'הודעות תחנה',
+  '/profile':          'פרופיל',
+  '/manager':          'ניהול',
+  '/driver-vehicles':  'רכבי כונן',
 }
 
 const roleLabels = {
@@ -87,8 +99,8 @@ const roleLabels = {
 
 // shifts, my-shifts, messages, profile
 const volunteerFullNav = [volunteerNav[0], volunteerNav[1], messagesNav, volunteerNav[3]]
-// duty, messages, profile
-const driverFullNav = [volunteerNav[2], messagesNav, volunteerNav[3]]
+// driver-vehicles, messages, profile
+const driverFullNav = [driverVehiclesNav, messagesNav, volunteerNav[3]]
 // shifts, duty, messages, manager
 const managerNav = [volunteerNav[0], volunteerNav[2], messagesNav, managerExtra]
 
