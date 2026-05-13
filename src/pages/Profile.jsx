@@ -3,15 +3,17 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 const roleLabels = {
-  admin: 'מנהל',
+  admin:      'מנהל',
   dispatcher: 'סדרן',
-  volunteer: 'מתנדב',
+  volunteer:  'מתנדב',
+  driver:     'נהג',
 }
 
 const roleColors = {
   admin:      'bg-purple-50 text-purple-700 border-purple-200',
   dispatcher: 'bg-sky-50 text-sky-700 border-sky-200',
   volunteer:  'bg-emerald-50 text-emerald-700 border-emerald-200',
+  driver:     'bg-amber-50 text-amber-700 border-amber-200',
 }
 
 export default function Profile() {

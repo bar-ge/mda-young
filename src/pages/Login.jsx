@@ -199,7 +199,8 @@ export default function Login() {
       })
       if (err) throw err
       if (data.user && birthISO) {
-        await supabase.from('profiles').update({ birth_date: birthISO }).eq('id', data.user.id)
+        const { error: bdErr } = await supabase.from('profiles').update({ birth_date: birthISO }).eq('id', data.user.id)
+        if (bdErr) console.error('birth_date update failed:', bdErr.message)
       }
       setMode('success')
     } catch (err) {
