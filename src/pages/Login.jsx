@@ -177,7 +177,7 @@ export default function Login() {
   function validateStep() {
     if (step === 1) {
       if (!form.full_name.trim() || form.full_name.trim().length < 2) { setError('נא להזין שם מלא (לפחות 2 תווים)'); return false }
-      if (form.phone.trim() && !/^[+]?[\d\s\-]{9,15}$/.test(form.phone.trim())) { setError('מספר טלפון לא תקין — לדוגמה: 050-1234567'); return false }
+      if (form.phone.trim() && !/^[+]?[\d\s-]{9,15}$/.test(form.phone.trim())) { setError('מספר טלפון לא תקין — לדוגמה: 050-1234567'); return false }
     }
     if (step === 2) {
       if (!signupPwd) { setError('נא למלא תאריך לידה מלא'); return false }

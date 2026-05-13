@@ -198,6 +198,7 @@ export default function ShiftsList({ typeFilter = null }) {
     : `${fmtDM(exportWeekStart)} – ${fmtDM(addDays(exportWeekStart, 6))}`
 
   return (
+    <>
     <div className="flex flex-col gap-3">
 
       {/* ── Export panel (events only) ── */}
@@ -490,5 +491,6 @@ export default function ShiftsList({ typeFilter = null }) {
         onSaved={() => { setEditingShift(null); load() }}
       />
     )}
+    </>
   )
 }
