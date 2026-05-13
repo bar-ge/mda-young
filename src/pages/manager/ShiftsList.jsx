@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useCalendar } from '../../contexts/CalendarContext'
 import { isoDate } from '../../components/CalendarGrid'
 import EventExportTable from '../../components/EventExportTable'
+import EditEventPanel from './EditEventPanel'
 
 function formatDate(ts) {
   const d = new Date(ts)
@@ -52,6 +53,7 @@ export default function ShiftsList({ typeFilter = null }) {
   const [expandedId,    setExpandedId]    = useState(null)
   const [volunteersMap, setVolunteersMap] = useState({})
   const [loadingVols,   setLoadingVols]   = useState(null)
+  const [editingShift,  setEditingShift]  = useState(null)
 
   // export panel state (events only)
   const [showExport,     setShowExport]     = useState(false)
@@ -401,6 +403,18 @@ export default function ShiftsList({ typeFilter = null }) {
                 {/* Expanded details */}
                 {isExpanded && (
                   <div className="border-t border-gray-100 bg-gray-50 px-4 py-3" dir="rtl">
+                    {/* Edit button (events only) */}
+                    {typeFilter === 'event' && (
+                      <button
+                        onClick={() => setEditingShift(shift)}
+                        className="w-full mb-3 flex items-center justify-center gap-2 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:border-[#E30613] hover:text-[#E30613] transition-all"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                        עריכת אירוע
+                      </button>
+                    )}
                     {/* Event resource counts */}
                     {shift.shift_type === 'event' && (
                       <div className="mb-3">
@@ -467,5 +481,14 @@ export default function ShiftsList({ typeFilter = null }) {
         </div>
       )}
     </div>
+
+    {/* Edit panel */}
+    {editingShift && (
+      <EditEventPanel
+        shift={editingShift}
+        onClose={() => setEditingShift(null)}
+        onSaved={() => { setEditingShift(null); load() }}
+      />
+    )}
   )
 }
