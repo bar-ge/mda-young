@@ -61,10 +61,11 @@ export default function ShiftsList({ typeFilter = null }) {
   const [exportYear,     setExportYear]     = useState(year)
   const [exportMonth,    setExportMonth]    = useState(month)
   const [exportWeekStart,setExportWeekStart]= useState(() => weekStartSunday(new Date().toISOString().slice(0,10)))
-  const [exportEvents,   setExportEvents]   = useState([])
-  const [exportLoading,  setExportLoading]  = useState(false)
-  const [exporting,      setExporting]      = useState(false)
-  const [printing,       setPrinting]       = useState(false)
+  const [exportEvents,       setExportEvents]       = useState([])
+  const [exportStatusFilter, setExportStatusFilter] = useState('all') // 'all' | 'active' | 'inactive'
+  const [exportLoading,      setExportLoading]      = useState(false)
+  const [exporting,          setExporting]          = useState(false)
+  const [printing,           setPrinting]           = useState(false)
   const exportRef = useRef(null)
 
   const PAGE_SIZE = 20
@@ -213,6 +214,13 @@ export default function ShiftsList({ typeFilter = null }) {
     return true
   })
 
+  // filter export events by active/inactive
+  const filteredExportEvents = exportEvents.filter(ev => {
+    if (exportStatusFilter === 'all') return true
+    const isPast = new Date(ev.end_time || ev.start_time) < now
+    return exportStatusFilter === 'inactive' ? isPast : !isPast
+  })
+
   // export title
   const exportTitle = exportMode === 'month'
     ? `${MONTH_HE[exportMonth]} ${exportYear}`
@@ -289,6 +297,32 @@ export default function ShiftsList({ typeFilter = null }) {
                 </div>
               )}
 
+              {/* Active / Inactive filter */}
+              <div className="flex gap-2">
+                {[
+                  ['all',      'הכל'],
+                  ['active',   'פעילים'],
+                  ['inactive', 'לא פעילים'],
+                ].map(([val, label]) => (
+                  <button key={val} onClick={() => setExportStatusFilter(val)}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      exportStatusFilter === val
+                        ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/20'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}>
+                    {label}
+                    {val !== 'all' && !exportLoading && (
+                      <span className="mr-1 opacity-70">
+                        ({exportEvents.filter(ev => {
+                          const isPast = new Date(ev.end_time || ev.start_time) < now
+                          return val === 'inactive' ? isPast : !isPast
+                        }).length})
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
               {/* Preview */}
               <div className="rounded-xl border border-gray-100 overflow-auto max-h-64">
                 {exportLoading ? (
@@ -297,7 +331,7 @@ export default function ShiftsList({ typeFilter = null }) {
                   </div>
                 ) : (
                   <div className="text-[8px] origin-top-left" style={{ transform: 'scale(0.6)', width: '166.7%' }}>
-                    <EventExportTable events={exportEvents} title={exportTitle} />
+                    <EventExportTable events={filteredExportEvents} title={exportTitle} />
                   </div>
                 )}
               </div>
@@ -332,7 +366,7 @@ export default function ShiftsList({ typeFilter = null }) {
 
           {/* Hidden full-size export table (used by html-to-image) */}
           <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>
-            <EventExportTable ref={exportRef} events={exportEvents} title={exportTitle} />
+            <EventExportTable ref={exportRef} events={filteredExportEvents} title={exportTitle} />
           </div>
         </>
       )}
