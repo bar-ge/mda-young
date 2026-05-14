@@ -112,7 +112,7 @@ export default function Layout() {
   const isManager = role === 'admin' || role === 'dispatcher'
   const nav = isManager ? managerNav : role === 'driver' ? driverFullNav : volunteerFullNav
 
-  const title    = pageTitles[location.pathname] || 'מד״א צעירים'
+  const title    = pageTitles[location.pathname] || 'מד״א'
   const initials = profile?.full_name?.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
 
   return (
@@ -132,7 +132,7 @@ export default function Layout() {
               </div>
             </div>
             <div>
-              <span className="font-bold text-gray-900 text-sm tracking-tight block">מד״א צעירים</span>
+              <span className="font-bold text-gray-900 text-sm tracking-tight block">מד״א</span>
             </div>
           </div>
 
@@ -199,7 +199,7 @@ export default function Layout() {
                 )}
               </div>
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-gray-900 text-sm tracking-tight">מד״א צעירים</span>
+                <span className="font-bold text-gray-900 text-sm tracking-tight">מד״א</span>
                 <div className="w-8 h-8 rounded-xl bg-[#E30613] flex items-center justify-center shadow-md shadow-red-500/40">
                   <svg viewBox="0 0 20 20" fill="white" className="w-4 h-4">
                     <polygon points="10,1 2.2,14.5 17.8,14.5"/>
@@ -213,7 +213,7 @@ export default function Layout() {
           {/* Desktop top bar */}
           <header className="hidden lg:flex sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-gray-100/80 px-8 h-14 items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span className="font-medium">מד״א צעירים</span>
+              <span className="font-medium">מד״א</span>
               <span className="text-gray-200">/</span>
               <span className="text-gray-600 font-semibold">{title}</span>
             </div>

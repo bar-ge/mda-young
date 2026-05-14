@@ -278,7 +278,7 @@ export default function Duty() {
                     <polygon points="10,19 2.2,5.5 17.8,5.5"/>
                   </svg>
                 </div>
-                <span className="text-[10px] text-gray-400 font-medium">מד״א צעירים</span>
+                <span className="text-[10px] text-gray-400 font-medium">מד״א</span>
               </div>
               <div className="text-right">
                 <p className="font-bold text-gray-900 text-sm">לוח כוננות שבועי</p>

@@ -59,7 +59,7 @@ function Splash() {
           </svg>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <span className="font-bold text-gray-900 text-lg tracking-tight">מד״א צעירים</span>
+          <span className="font-bold text-gray-900 text-lg tracking-tight">מד״א</span>
           <span className="text-xs text-gray-400">טוען...</span>
         </div>
         <div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin" />

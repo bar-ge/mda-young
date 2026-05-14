@@ -192,7 +192,7 @@ export default function Profile() {
         </svg>
       </button>
 
-      <p className="text-center text-xs text-gray-300 pb-2">מד״א צעירים v{pkg.version}</p>
+      <p className="text-center text-xs text-gray-300 pb-2">מד״א v{pkg.version}</p>
     </div>
   )
 }

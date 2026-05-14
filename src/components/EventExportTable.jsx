@@ -40,7 +40,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
   >
     <div style={{ textAlign: 'center', marginBottom: '14px' }}>
       <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#111', marginBottom: '2px' }}>
-        טבלת אבטוחים — מד"א צעירים
+        טבלת אבטוחים — מד"א
       </div>
       <div style={{ fontSize: '13px', color: '#444' }}>{title}</div>
     </div>

@@ -237,7 +237,7 @@ export default function Login() {
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-white font-bold text-2xl tracking-tight">מד״א צעירים</h1>
+          <h1 className="text-white font-bold text-2xl tracking-tight">מד״א</h1>
           <p className="text-white/55 text-sm mt-0.5 font-medium tracking-wide">ניהול משמרות מתנדבים</p>
         </div>
       </div>
