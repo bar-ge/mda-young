@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { CalendarProvider } from '../contexts/CalendarContext'
 
@@ -101,8 +101,8 @@ const roleLabels = {
 const volunteerFullNav = [volunteerNav[0], volunteerNav[1], messagesNav, volunteerNav[3]]
 // driver-vehicles, messages, profile
 const driverFullNav = [driverVehiclesNav, messagesNav, volunteerNav[3]]
-// shifts, duty, messages, manager
-const managerNav = [volunteerNav[0], volunteerNav[2], messagesNav, managerExtra]
+// shifts, duty, messages, manager, profile
+const managerNav = [volunteerNav[0], volunteerNav[2], messagesNav, managerExtra, volunteerNav[3]]
 
 export default function Layout() {
   const { profile, signOut } = useAuth()
@@ -157,15 +157,17 @@ export default function Layout() {
           {/* User + sign-out */}
           <div className="px-3 pb-4 pt-3 border-t border-gray-100/80 shrink-0">
             <div className="flex items-center gap-2.5 bg-gray-50/80 rounded-xl px-3 py-2.5">
-              <div className="p-0.5 rounded-full bg-white shadow-sm shrink-0">
-                <div className="w-7 h-7 rounded-full bg-[#E30613] flex items-center justify-center">
-                  <span className="text-white font-bold text-[10px]">{initials}</span>
+              <Link to="/profile" className="flex items-center gap-2.5 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+                <div className="p-0.5 rounded-full bg-white shadow-sm shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-[#E30613] flex items-center justify-center">
+                    <span className="text-white font-bold text-[10px]">{initials}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 min-w-0 text-right">
-                <p className="text-xs font-semibold text-gray-900 truncate">{profile?.full_name}</p>
-                <p className="text-[10px] text-gray-400">{roleLabels[profile?.role] || 'מתנדב'}</p>
-              </div>
+                <div className="flex-1 min-w-0 text-right">
+                  <p className="text-xs font-semibold text-gray-900 truncate">{profile?.full_name}</p>
+                  <p className="text-[10px] text-gray-400">{roleLabels[profile?.role] || 'מתנדב'}</p>
+                </div>
+              </Link>
               <button
                 onClick={signOut}
                 title="התנתק"
