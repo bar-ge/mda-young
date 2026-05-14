@@ -73,6 +73,7 @@ export default function CalendarGrid({
               const dayShifts = shiftMap[dateStr] || []
               const isBlocked = blockedSet.has(dateStr)
               const isToday   = dateStr === todayStr
+              const isPast    = dateStr < todayStr
               const isSel     = selected === dateStr
               const dayCount  = countMap[dateStr]
 
@@ -81,12 +82,13 @@ export default function CalendarGrid({
                   key={day}
                   onClick={() => onSelect(isSel ? null : dateStr)}
                   className={`flex flex-col items-center justify-start pt-1.5 pb-1 gap-0.5 border-b border-r border-gray-50 last:border-r-0 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                    isSel ? 'bg-[#E30613]/5' : 'hover:bg-gray-50'
+                    isSel ? 'bg-[#E30613]/5' : isPast ? 'bg-gray-50/60 hover:bg-gray-100/60' : 'hover:bg-gray-50'
                   }`}
                 >
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                     isToday ? 'bg-[#E30613] text-white shadow-sm shadow-red-500/30' :
                     isSel   ? 'bg-[#E30613]/15 text-[#E30613]' :
+                    isPast  ? 'text-gray-400' :
                               'text-gray-700'
                   }`}>
                     {isBlocked ? '🔒' : day}
@@ -94,7 +96,7 @@ export default function CalendarGrid({
                   {dayShifts.length > 0 && (
                     <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
                       {dayShifts.map((s, i) => (
-                        <span key={i} className={`w-1.5 h-1.5 rounded-full ${dotFn(s)}`} />
+                        <span key={i} className={`w-1.5 h-1.5 rounded-full ${isPast ? 'bg-gray-300' : dotFn(s)}`} />
                       ))}
                     </div>
                   )}

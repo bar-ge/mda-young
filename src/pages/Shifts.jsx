@@ -116,10 +116,13 @@ export default function Shifts() {
   }
 
   const now = new Date()
-  const displayShifts = shifts.filter(s =>
-    s.shift_type !== 'holiday' && s.status !== 'cancelled' &&
-    (filter === 'all' || s.status === 'open')
-  )
+  const displayShifts = shifts.filter(s => {
+    if (s.shift_type === 'holiday') return false
+    if (s.status === 'cancelled') return false
+    const isPast = new Date(s.end_time || s.start_time) < now
+    if (isPast) return true  // always keep past shifts visible for history
+    return filter === 'all' || s.status === 'open'
+  })
   const selectedShifts  = selected ? displayShifts.filter(s => s.start_time.slice(0, 10) === selected) : []
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
