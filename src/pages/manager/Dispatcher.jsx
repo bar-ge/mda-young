@@ -206,8 +206,11 @@ function Approvals({ invalidate }) {
             const profile   = a.profile
             const cfg       = statusCfg[a.status] || statusCfg.pending
             const isPending = a.status === 'pending'
-            const shiftFull = shift?.max_volunteers > 0 &&
-              (confirmedMap[a.shift_id] || 0) >= shift.max_volunteers
+            const eventCap  = shift?.shift_type === 'event'
+              ? (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+              : 0
+            const capacity  = shift?.shift_type === 'event' ? eventCap : (shift?.max_volunteers || 0)
+            const shiftFull = capacity > 0 && (confirmedMap[a.shift_id] || 0) >= capacity
 
             return (
               <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex flex-col gap-3">
@@ -304,7 +307,7 @@ function ManualAssignment({ invalidate }) {
       const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
       const { data: sh } = await supabase.from('shifts')
-        .select('id, title, start_time, end_time, location, status, shift_type, veteran_only, max_volunteers')
+        .select('id, title, start_time, end_time, location, status, shift_type, veteran_only, max_volunteers, motorcycle_count, white_amb_count, er_team_count')
         .gte('start_time', now).lte('start_time', to)
         .neq('shift_type', 'holiday')
         .neq('status', 'cancelled')
@@ -342,7 +345,10 @@ function ManualAssignment({ invalidate }) {
     const name  = (nameInput[shiftId] || '').trim()
     if (!name) return
     const shift = shifts.find(s => s.id === shiftId)
-    if (shift && (confirmedMap[shiftId] || 0) >= shift.max_volunteers) return
+    const cap   = shift?.shift_type === 'event'
+      ? (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+      : shift?.max_volunteers || 0
+    if (shift && cap > 0 && (confirmedMap[shiftId] || 0) >= cap) return
     setAdding(shiftId)
     const { data, error } = await supabase
       .from('shift_assignments')
@@ -411,7 +417,10 @@ function ManualAssignment({ invalidate }) {
             const manuals        = manualMap[shift.id] || []
             const isOpen         = expanded === shift.id
             const totalConfirmed = confirmedMap[shift.id] || 0
-            const isFull         = totalConfirmed >= shift.max_volunteers
+            const capacity       = shift.shift_type === 'event'
+              ? (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+              : shift.max_volunteers
+            const isFull         = capacity > 0 && totalConfirmed >= capacity
 
             return (
               <div key={shift.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
@@ -429,7 +438,9 @@ function ManualAssignment({ invalidate }) {
                         ? 'bg-sky-50 text-sky-700 border-sky-100'
                         : 'bg-gray-50 text-gray-400 border-gray-100'
                     }`}>
-                      {totalConfirmed}/{shift.max_volunteers}
+                      {shift.shift_type === 'event'
+                        ? `${totalConfirmed}/${capacity || '—'}`
+                        : `${totalConfirmed}/${shift.max_volunteers}`}
                     </span>
                     {isFull && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-100">מלא</span>
