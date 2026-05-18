@@ -426,7 +426,14 @@ export default function ShiftsList({ typeFilter = null }) {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
                         {cfg.label}
                       </span>
-                      {shift.max_volunteers > 0 && (
+                      {shift.shift_type === 'event' ? (() => {
+                        const total = (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+                        return total > 0 ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#E30613]/8 text-[#E30613] border-[#E30613]/20">
+                            {total} מתנדבים
+                          </span>
+                        ) : null
+                      })() : shift.max_volunteers > 0 && (
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                           isFull
                             ? 'bg-red-50 text-red-600 border-red-100'
@@ -457,7 +464,7 @@ export default function ShiftsList({ typeFilter = null }) {
                   </div>
 
                   {/* Event resource summary */}
-                  {shift.shift_type === 'event' && (
+                  {shift.shift_type === 'event' && (shift.event_nature || shift.expected_crowd > 0) && (
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {shift.event_nature && (
                         <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">{shift.event_nature}</span>
@@ -465,14 +472,6 @@ export default function ShiftsList({ typeFilter = null }) {
                       {shift.expected_crowd > 0 && (
                         <span className="text-[10px] text-gray-500">👥 {shift.expected_crowd.toLocaleString()}</span>
                       )}
-                      {(() => {
-                        const total = (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
-                        return total > 0 ? (
-                          <span className="text-[10px] font-bold text-[#E30613] bg-[#E30613]/8 px-2 py-0.5 rounded-full">
-                            {total} מתנדבים
-                          </span>
-                        ) : null
-                      })()}
                     </div>
                   )}
                 </button>
