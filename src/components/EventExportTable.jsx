@@ -50,6 +50,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
         <tr style={{ background: '#1e3a5f' }}>
           {['תאריך','משעה','עד שעה','מיקום','אופי האירוע','צפי קהל',
             ...RESOURCE_COLS.map(c => c.label),
+            'סה״כ מתנדבים',
           ].map(h => <th key={h} style={TH}>{h}</th>)}
         </tr>
       </thead>
@@ -71,6 +72,9 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
             {RESOURCE_COLS.map(c => (
               <td key={c.key} style={TD}>{ev[c.key] || ''}</td>
             ))}
+            <td style={{ ...TD, fontWeight: 'bold', color: '#E30613' }}>
+              {(ev.motorcycle_count || 0) * 1 + (ev.white_amb_count || 0) * 2 + (ev.er_team_count || 0) * 3 || ''}
+            </td>
           </tr>
         ))}
       </tbody>

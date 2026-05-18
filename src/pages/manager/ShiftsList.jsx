@@ -457,7 +457,7 @@ export default function ShiftsList({ typeFilter = null }) {
                   </div>
 
                   {/* Event resource summary */}
-                  {shift.shift_type === 'event' && (shift.event_nature || shift.expected_crowd > 0) && (
+                  {shift.shift_type === 'event' && (
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {shift.event_nature && (
                         <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">{shift.event_nature}</span>
@@ -465,6 +465,14 @@ export default function ShiftsList({ typeFilter = null }) {
                       {shift.expected_crowd > 0 && (
                         <span className="text-[10px] text-gray-500">👥 {shift.expected_crowd.toLocaleString()}</span>
                       )}
+                      {(() => {
+                        const total = (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+                        return total > 0 ? (
+                          <span className="text-[10px] font-bold text-[#E30613] bg-[#E30613]/8 px-2 py-0.5 rounded-full">
+                            {total} מתנדבים
+                          </span>
+                        ) : null
+                      })()}
                     </div>
                   )}
                 </button>
@@ -487,7 +495,15 @@ export default function ShiftsList({ typeFilter = null }) {
                     {/* Event resource counts */}
                     {shift.shift_type === 'event' && (
                       <div className="mb-3">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">כוח אדם וציוד</p>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">כוח אדם וציוד</span>
+                          {(() => {
+                            const total = (shift.motorcycle_count || 0) * 1 + (shift.white_amb_count || 0) * 2 + (shift.er_team_count || 0) * 3
+                            return total > 0 ? (
+                              <span className="text-xs font-bold text-[#E30613]">סה״כ: {total} מתנדבים</span>
+                            ) : null
+                          })()}
+                        </div>
                         <div className="flex flex-wrap gap-1.5">
                           {[
                             ['אופנוע', shift.motorcycle_count],

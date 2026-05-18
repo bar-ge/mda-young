@@ -342,6 +342,18 @@ export default function CreateShift({ onShiftCreated }) {
                       <Stepper key={key} label={label} value={form[key]} onChange={v => set(key, v)} />
                     ))}
                   </div>
+                  {/* Volunteer total */}
+                  {(() => {
+                    const total = form.motorcycle_count * 1 + form.white_amb_count * 2 + form.er_team_count * 3
+                    return (
+                      <div className={`flex items-center justify-end gap-2 mt-2 px-3 py-2 rounded-xl transition-colors ${
+                        total > 0 ? 'bg-[#E30613]/5' : 'bg-gray-50'
+                      }`}>
+                        <span className={`text-sm font-bold tabular-nums ${total > 0 ? 'text-[#E30613]' : 'text-gray-300'}`}>{total}</span>
+                        <span className="text-xs text-gray-500">סה״כ מתנדבים מחושב</span>
+                      </div>
+                    )
+                  })()}
                 </div>
 
               </>
