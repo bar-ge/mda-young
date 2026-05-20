@@ -45,7 +45,7 @@ const typeDot = {
 }
 
 export default function ShiftsList({ typeFilter = null }) {
-  const { year, month, refreshKey } = useCalendar()
+  const { year, month, prevMonth, nextMonth, refreshKey } = useCalendar()
   const [shifts,        setShifts]        = useState([])
   const [countMap,      setCountMap]      = useState({})
   const [loading,       setLoading]       = useState(true)
@@ -373,7 +373,15 @@ export default function ShiftsList({ typeFilter = null }) {
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-400">{filtered.length} {typeFilter === 'event' ? 'אירועים' : 'משמרות'}</span>
-        <span className="text-xs font-semibold text-gray-500">{monthName}</span>
+        <div className="flex items-center gap-1">
+          <button onClick={nextMonth} disabled={loading} className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span className="text-xs font-semibold text-gray-500 w-24 text-center">{monthName}</span>
+          <button onClick={prevMonth} disabled={loading} className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
