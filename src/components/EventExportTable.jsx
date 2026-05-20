@@ -48,7 +48,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
       <thead>
         <tr style={{ background: '#1e3a5f' }}>
-          {['תאריך','משעה','עד שעה','מיקום','אופי האירוע','צפי קהל',
+          {['תאריך','משעה','עד שעה','מיקום','אופי האירוע','תיאור','צפי קהל',
             ...RESOURCE_COLS.map(c => c.label),
             'סה״כ מתנדבים',
           ].map(h => <th key={h} style={TH}>{h}</th>)}
@@ -57,7 +57,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
       <tbody>
         {events.length === 0 ? (
           <tr>
-            <td colSpan={19} style={{ ...TD, padding: '16px', color: '#999' }}>
+            <td colSpan={20} style={{ ...TD, padding: '16px', color: '#999' }}>
               אין אירועים בטווח זה
             </td>
           </tr>
@@ -68,6 +68,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
             <td style={TD}>{fmtH(ev.end_time)}</td>
             <td style={TDR}>{ev.location    || '—'}</td>
             <td style={TDR}>{ev.event_nature || '—'}</td>
+            <td style={TDR}>{ev.description  || ''}</td>
             <td style={TD}>{ev.expected_crowd || ''}</td>
             {RESOURCE_COLS.map(c => (
               <td key={c.key} style={TD}>{ev[c.key] || ''}</td>
