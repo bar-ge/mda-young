@@ -68,7 +68,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
             <td style={TD}>{fmtH(ev.end_time)}</td>
             <td style={TDR}>{ev.location    || '—'}</td>
             <td style={TDR}>{ev.event_nature || '—'}</td>
-            <td style={TDR}>{ev.description  || ''}</td>
+            <td style={TDR}>{ev.title || ''}</td>
             <td style={TD}>{ev.expected_crowd || ''}</td>
             {RESOURCE_COLS.map(c => (
               <td key={c.key} style={TD}>{ev[c.key] || ''}</td>
