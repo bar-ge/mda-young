@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
@@ -29,10 +29,7 @@ export default function MyShifts() {
   const touchStartY  = useRef(0)
   const containerRef = useRef(null)
 
-  useEffect(() => { load() }, [refreshKey])
-  useEffect(() => { setSelected(null) }, [year, month])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const { data } = await supabase
@@ -44,7 +41,10 @@ export default function MyShifts() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id])
+
+  useEffect(() => { load() }, [load, refreshKey])
+  useEffect(() => { setSelected(null) }, [year, month])
 
   function onTouchStart(e) { touchStartY.current = e.touches[0].clientY }
   function onTouchMove(e) {

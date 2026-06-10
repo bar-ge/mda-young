@@ -1,5 +1,14 @@
 import { forwardRef } from 'react'
 
+const TBL = {
+  headerBg:     '#1e3a5f',
+  headerBorder: '#2d5480',
+  headerText:   '#fff',
+  rowBorder:    '#dde3ea',
+  rowText:      '#222',
+  accentRed:    '#E30613',
+}
+
 export const RESOURCE_COLS = [
   { key: 'motorcycle_count',  label: 'אופנוע'     },
   { key: 'asn_count',         label: 'אס"ן'        },
@@ -25,11 +34,11 @@ function fmtH(ts) {
 }
 
 const TH = {
-  padding: '5px 8px', border: '1px solid #2d5480',
+  padding: '5px 8px', border: `1px solid ${TBL.headerBorder}`,
   textAlign: 'center', fontWeight: 'bold', fontSize: '10px',
-  whiteSpace: 'nowrap', color: '#fff',
+  whiteSpace: 'nowrap', color: TBL.headerText,
 }
-const TD  = { padding: '5px 7px', border: '1px solid #dde3ea', textAlign: 'center', fontSize: '10px', color: '#222' }
+const TD  = { padding: '5px 7px', border: `1px solid ${TBL.rowBorder}`, textAlign: 'center', fontSize: '10px', color: TBL.rowText }
 const TDR = { ...TD, textAlign: 'right' }
 
 const EventExportTable = forwardRef(({ events, title }, ref) => (
@@ -47,7 +56,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
 
     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
       <thead>
-        <tr style={{ background: '#1e3a5f' }}>
+        <tr style={{ background: TBL.headerBg }}>
           {['תאריך','משעה','עד שעה','מיקום','אופי האירוע','תיאור','צפי קהל',
             ...RESOURCE_COLS.map(c => c.label),
             'סה״כ מתנדבים',
@@ -73,7 +82,7 @@ const EventExportTable = forwardRef(({ events, title }, ref) => (
             {RESOURCE_COLS.map(c => (
               <td key={c.key} style={TD}>{ev[c.key] || ''}</td>
             ))}
-            <td style={{ ...TD, fontWeight: 'bold', color: '#E30613' }}>
+            <td style={{ ...TD, fontWeight: 'bold', color: TBL.accentRed }}>
               {(ev.motorcycle_count || 0) * 1 + (ev.white_amb_count || 0) * 2 + (ev.er_team_count || 0) * 3 || ''}
             </td>
           </tr>

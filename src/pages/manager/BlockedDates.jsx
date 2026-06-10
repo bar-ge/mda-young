@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCalendar } from '../../contexts/CalendarContext'
@@ -21,17 +21,17 @@ export default function BlockedDates() {
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
-  useEffect(() => { load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await supabase.from('blocked_dates').select('*').order('date')
+      const { data } = await supabase.from('blocked_dates').select('id,date,reason,created_by').order('date')
       if (data) setBlocked(data)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => { load() }, [load])
 
   async function save(e) {
     e.preventDefault()
@@ -113,7 +113,7 @@ export default function BlockedDates() {
               {upcoming.map(b => (
                 <div key={b.id} className="bg-white rounded-2xl border border-red-100 shadow-sm p-4 flex items-center justify-between gap-3">
                   <button onClick={() => remove(b.id)}
-                    className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors shrink-0">×</button>
+                    className="w-9 h-9 rounded-lg bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors shrink-0">×</button>
                   <div className="flex-1 text-right">
                     <p className="font-semibold text-gray-900 text-sm">{formatDate(b.date)}</p>
                     {b.reason && <p className="text-xs text-gray-400 mt-0.5">{b.reason}</p>}
@@ -129,7 +129,7 @@ export default function BlockedDates() {
               {past.map(b => (
                 <div key={b.id} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between gap-3 opacity-50">
                   <button onClick={() => remove(b.id)}
-                    className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center text-sm shrink-0">×</button>
+                    className="w-9 h-9 rounded-lg bg-red-50 text-red-400 flex items-center justify-center text-sm shrink-0">×</button>
                   <div className="flex-1 text-right">
                     <p className="font-semibold text-gray-900 text-sm">{formatDate(b.date)}</p>
                     {b.reason && <p className="text-xs text-gray-400 mt-0.5">{b.reason}</p>}

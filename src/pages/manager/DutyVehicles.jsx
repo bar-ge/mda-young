@@ -74,7 +74,7 @@ export default function DutyVehicles() {
     setLoading(true)
     try {
       const [{ data: veh }, { data: sh }, { data: drv }] = await Promise.all([
-        supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+        supabase.from('duty_vehicles').select('id,name,type,status,notes,available_days').eq('status', 'active').order('name'),
         supabase.from('duty_shifts')
           .select('*, duty_vehicles(name), driver_name')
           .gte('start_time', new Date().toISOString().slice(0, 10))

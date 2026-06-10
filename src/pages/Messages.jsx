@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -27,13 +27,11 @@ export default function Messages() {
   const [deletingId, setDeletingId] = useState(null)
   const [form, setForm] = useState({ title: '', body: '', target_role: 'all' })
 
-  useEffect(() => { load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     let query = supabase
       .from('station_messages')
-      .select('*')
+      .select('id,title,body,target_role,created_at,created_by,created_by_name')
       .order('created_at', { ascending: false })
 
     if (!isManager && profile?.role) {
@@ -43,7 +41,9 @@ export default function Messages() {
     const { data } = await query
     if (data) setMessages(data)
     setLoading(false)
-  }
+  }, [isManager, profile])
+
+  useEffect(() => { load() }, [load])
 
   async function handleSend() {
     if (!form.title.trim() || !form.body.trim()) return

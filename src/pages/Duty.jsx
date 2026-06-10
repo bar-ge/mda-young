@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
@@ -55,10 +55,7 @@ export default function Duty() {
 
   const isManager = profile?.role === 'admin' || profile?.role === 'dispatcher'
 
-  useEffect(() => { load() }, [year, month, refreshKey])
-  useEffect(() => { if (weekMode) loadWeekShifts() }, [weekMode, weekStart, vehicles.length])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const from    = isoDate(year, month, 1)
@@ -66,7 +63,7 @@ export default function Duty() {
       const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
       const [{ data: veh }, { data: sh }] = await Promise.all([
-        supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+        supabase.from('duty_vehicles').select('id,name,type,status,notes,available_days').eq('status', 'active').order('name'),
         supabase.from('duty_shifts')
           .select('id, vehicle_id, status, start_time, end_time, driver_name')
           .gte('start_time', from).lte('start_time', to)
@@ -77,9 +74,9 @@ export default function Duty() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [year, month])
 
-  async function loadWeekShifts() {
+  const loadWeekShifts = useCallback(async () => {
     setWeekLoading(true)
     try {
       const to = addDays(weekStart, 6) + 'T23:59:59'
@@ -92,7 +89,10 @@ export default function Duty() {
     } finally {
       setWeekLoading(false)
     }
-  }
+  }, [weekStart])
+
+  useEffect(() => { load() }, [load, refreshKey])
+  useEffect(() => { if (weekMode) loadWeekShifts() }, [weekMode, loadWeekShifts, vehicles.length])
 
   async function exportPng() {
     if (!weekGridRef.current) return
@@ -112,7 +112,6 @@ export default function Duty() {
       document.body.removeChild(a)
       toast('לוח הכוננות יוצא בהצלחה')
     } catch (err) {
-      console.error('Export PNG error:', err)
       toast('שגיאה בייצוא', { type: 'error' })
     } finally {
       setExporting(false)

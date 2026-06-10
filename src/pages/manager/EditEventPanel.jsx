@@ -56,10 +56,10 @@ function Stepper({ label, value, onChange }) {
       <span className="text-[10px] font-semibold text-gray-500 text-center leading-tight">{label}</span>
       <div className="flex items-center gap-1">
         <button type="button" onClick={() => onChange(Math.max(0, value - 1))}
-          className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 font-bold text-base hover:bg-gray-200 transition-colors flex items-center justify-center">−</button>
+          className="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 font-bold text-base hover:bg-gray-200 transition-colors flex items-center justify-center">−</button>
         <span className={`w-7 text-center text-sm font-bold tabular-nums ${value > 0 ? 'text-[#E30613]' : 'text-gray-300'}`}>{value}</span>
         <button type="button" onClick={() => onChange(value + 1)}
-          className="w-7 h-7 rounded-lg bg-[#E30613]/10 text-[#E30613] font-bold text-base hover:bg-[#E30613]/20 transition-colors flex items-center justify-center">+</button>
+          className="w-9 h-9 rounded-lg bg-[#E30613]/10 text-[#E30613] font-bold text-base hover:bg-[#E30613]/20 transition-colors flex items-center justify-center">+</button>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCalendar } from '../../contexts/CalendarContext'
@@ -204,9 +204,7 @@ export default function Templates() {
   const [genResult, setGenResult] = useState(null)
   const autoRan = useRef(false)
 
-  useEffect(() => { load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     let t, b
     try {
@@ -228,7 +226,9 @@ export default function Templates() {
         if (count > 0) setGenResult({ count, auto: true })
       } catch (_) {}
     }
-  }
+  }, [user])
+
+  useEffect(() => { load() }, [load])
 
   async function handleGenerate() {
     setGenerating(true)

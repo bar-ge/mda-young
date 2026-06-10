@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -32,14 +32,12 @@ export default function DriverVehicles() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  useEffect(() => { load() }, [weekStart])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const to = addDays(weekStart, 6) + 'T23:59:59'
       const [{ data: veh }, { data: sh }] = await Promise.all([
-        supabase.from('duty_vehicles').select('*').eq('status', 'active').order('name'),
+        supabase.from('duty_vehicles').select('id,name,type,status,notes,available_days').eq('status', 'active').order('name'),
         supabase.from('duty_shifts')
           .select('vehicle_id, start_time, driver_name, status')
           .gte('start_time', weekStart)
@@ -51,7 +49,9 @@ export default function DriverVehicles() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [weekStart])
+
+  useEffect(() => { load() }, [load])
 
   const myShifts = shifts.filter(s => s.driver_name === myName)
 

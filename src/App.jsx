@@ -1,16 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Component } from 'react'
+import { Component, Suspense, lazy } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import Layout from './components/Layout'
-import Login from './pages/Login'
-import Shifts from './pages/Shifts'
-import MyShifts from './pages/MyShifts'
-import Duty from './pages/Duty'
-import Profile from './pages/Profile'
-import Manager from './pages/Manager'
-import Messages from './pages/Messages'
-import DriverVehicles from './pages/DriverVehicles'
+const Login          = lazy(() => import('./pages/Login'))
+const Shifts         = lazy(() => import('./pages/Shifts'))
+const MyShifts       = lazy(() => import('./pages/MyShifts'))
+const Duty           = lazy(() => import('./pages/Duty'))
+const Profile        = lazy(() => import('./pages/Profile'))
+const Manager        = lazy(() => import('./pages/Manager'))
+const Messages       = lazy(() => import('./pages/Messages'))
+const DriverVehicles = lazy(() => import('./pages/DriverVehicles'))
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false } }
@@ -74,24 +74,26 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Navigate to="/shifts" replace />} />
-            <Route path="shifts"    element={<Shifts />} />
-            <Route path="my-shifts" element={<MyShifts />} />
-            <Route path="duty"      element={<Duty />} />
-            <Route path="messages"         element={<Messages />} />
-            <Route path="manager"          element={<Manager />} />
-            <Route path="driver-vehicles"  element={<DriverVehicles />} />
-            <Route path="profile"          element={<Profile />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/shifts" replace />} />
-        </Routes>
+        <Suspense fallback={<Splash />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/shifts" replace />} />
+              <Route path="shifts"    element={<Shifts />} />
+              <Route path="my-shifts" element={<MyShifts />} />
+              <Route path="duty"      element={<Duty />} />
+              <Route path="messages"         element={<Messages />} />
+              <Route path="manager"          element={<Manager />} />
+              <Route path="driver-vehicles"  element={<DriverVehicles />} />
+              <Route path="profile"          element={<Profile />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/shifts" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
       </ToastProvider>
     </AuthProvider>

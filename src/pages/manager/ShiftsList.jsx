@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useCalendar } from '../../contexts/CalendarContext'
 import { isoDate } from '../../components/CalendarGrid'
@@ -71,19 +71,7 @@ export default function ShiftsList({ typeFilter = null }) {
   const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
-  useEffect(() => { load() }, [year, month, refreshKey])
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [filter, shifts])
-
-  // sync export year/month when calendar changes
-  useEffect(() => { setExportYear(year); setExportMonth(month) }, [year, month])
-
-  // load export events whenever panel params change
-  useEffect(() => {
-    if (!showExport) return
-    loadExportEvents()
-  }, [showExport, exportMode, exportYear, exportMonth, exportWeekStart])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     setExpandedId(null)
     const from    = isoDate(year, month, 1)
@@ -111,9 +99,9 @@ export default function ShiftsList({ typeFilter = null }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [year, month])
 
-  async function loadExportEvents() {
+  const loadExportEvents = useCallback(async () => {
     setExportLoading(true)
     let from, to
     if (exportMode === 'month') {
@@ -131,7 +119,19 @@ export default function ShiftsList({ typeFilter = null }) {
       .order('start_time')
     setExportEvents(data || [])
     setExportLoading(false)
-  }
+  }, [exportMode, exportYear, exportMonth, exportWeekStart])
+
+  useEffect(() => { load() }, [load, refreshKey])
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [filter, shifts])
+
+  // sync export year/month when calendar changes
+  useEffect(() => { setExportYear(year); setExportMonth(month) }, [year, month])
+
+  // load export events whenever panel params change
+  useEffect(() => {
+    if (!showExport) return
+    loadExportEvents()
+  }, [showExport, loadExportEvents])
 
   async function handlePrint() {
     if (!exportRef.current) return
@@ -161,8 +161,7 @@ export default function ShiftsList({ typeFilter = null }) {
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-    } catch (err) {
-      console.error('Export error:', err)
+    } catch {
     } finally {
       setExporting(false)
     }
@@ -374,11 +373,11 @@ export default function ShiftsList({ typeFilter = null }) {
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-400">{filtered.length} {typeFilter === 'event' ? 'אירועים' : 'משמרות'}</span>
         <div className="flex items-center gap-1">
-          <button onClick={nextMonth} disabled={loading} className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
+          <button onClick={nextMonth} disabled={loading} aria-label="חודש הבא" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
           <span className="text-xs font-semibold text-gray-500 w-24 text-center">{monthName}</span>
-          <button onClick={prevMonth} disabled={loading} className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
+          <button onClick={prevMonth} disabled={loading} aria-label="חודש קודם" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>

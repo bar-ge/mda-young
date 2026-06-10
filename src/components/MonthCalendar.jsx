@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useCalendar } from '../contexts/CalendarContext'
@@ -529,7 +529,7 @@ export default function MonthCalendar({ jumpToDate }) {
                                   onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value + 'T' + (f[key]?.slice(11) || '00:00') }))}
                                   className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#E30613]/25 focus:border-[#E30613]" />
                                 <div dir="ltr" className="flex items-center gap-0.5 rounded-lg border border-gray-200 px-1 bg-white focus-within:ring-2 focus-within:ring-[#E30613]/25 focus-within:border-[#E30613]">
-                                  <select value={editForm[key]?.slice(11, 13) || '00'}
+                                  <select aria-label="שעה" value={editForm[key]?.slice(11, 13) || '00'}
                                     onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 11) || '') + e.target.value + ':' + (f[key]?.slice(14) || '00') }))}
                                     className="flex-1 py-1.5 text-xs bg-transparent focus:outline-none text-center appearance-none">
                                     {Array.from({length:24},(_,i)=>String(i).padStart(2,'0')).map(h=>(
@@ -537,7 +537,7 @@ export default function MonthCalendar({ jumpToDate }) {
                                     ))}
                                   </select>
                                   <span className="text-gray-400 text-xs font-bold select-none">:</span>
-                                  <select value={editForm[key]?.slice(14, 16) || '00'}
+                                  <select aria-label="דקות" value={editForm[key]?.slice(14, 16) || '00'}
                                     onChange={e => setEditForm(f => ({ ...f, [key]: (f[key]?.slice(0, 14) || '') + e.target.value }))}
                                     className="flex-1 py-1.5 text-xs bg-transparent focus:outline-none text-center appearance-none">
                                     {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>(
@@ -587,7 +587,7 @@ export default function MonthCalendar({ jumpToDate }) {
                           <button
                             onClick={() => deleteShift(s.id)}
                             disabled={deleting === s.id}
-                            className="w-7 h-7 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
+                            className="w-9 h-9 rounded-lg bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
                           >
                             {deleting === s.id ? (
                               <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
@@ -600,7 +600,7 @@ export default function MonthCalendar({ jumpToDate }) {
                           </button>
                           <button
                             onClick={() => startEdit(s)}
-                            className="w-7 h-7 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center hover:bg-sky-100 transition-colors"
+                            className="w-9 h-9 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center hover:bg-sky-100 transition-colors"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>

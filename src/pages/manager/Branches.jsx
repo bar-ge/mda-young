@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function Branches() {
@@ -9,17 +9,17 @@ export default function Branches() {
   const [saving, setSaving] = useState(false)
   const [toggling, setToggling] = useState(null)
 
-  useEffect(() => { load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await supabase.from('branches').select('*').order('created_at')
+      const { data } = await supabase.from('branches').select('id,name,location,is_active,created_at').order('created_at')
       if (data) setBranches(data)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => { load() }, [load])
 
   async function save(e) {
     e.preventDefault()
