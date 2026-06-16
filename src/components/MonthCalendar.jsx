@@ -77,7 +77,7 @@ export default function MonthCalendar({ jumpToDate }) {
 
       const [{ data: sh }, { data: bl }] = await Promise.all([
         supabase.from('shifts')
-          .select('id, title, description, start_time, end_time, status, shift_type, location, veteran_only, max_volunteers')
+          .select('id, title, start_time, end_time, status, shift_type, location, veteran_only, max_volunteers')
           .gte('start_time', from).lte('start_time', to).order('start_time'),
         supabase.from('blocked_dates').select('date, reason')
           .gte('date', from.slice(0, 10)).lte('date', to.slice(0, 10)),
