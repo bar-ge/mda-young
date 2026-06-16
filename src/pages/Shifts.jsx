@@ -52,10 +52,10 @@ export default function Shifts() {
       const to      = isoDate(year, month, lastDay) + 'T23:59:59'
 
       const [{ data: sh }, { data: as }, { data: bl }] = await Promise.all([
-        supabase.from('shifts').select('id,title,start_time,end_time,status,shift_type,location,max_volunteers,event_nature,expected_crowd,motorcycle_count,asn_count,white_amb_count,amb_4x4_count,als_tent_count,er_team_count,hq_rep_count,commander_count,emt_count,ops_manager_count,atv_count,paramedic_count,taran,notes')
+        supabase.from('shifts').select('*')
           .gte('start_time', from).lte('start_time', to)
           .order('start_time'),
-        supabase.from('shift_assignments').select('id,shift_id,user_id,status,manual_name,assigned_at').eq('user_id', user.id),
+        supabase.from('shift_assignments').select('*').eq('user_id', user.id),
         supabase.from('blocked_dates').select('date, reason')
           .gte('date', from).lte('date', to.slice(0, 10)),
       ])
