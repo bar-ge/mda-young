@@ -55,11 +55,10 @@ export default function Landing() {
         </Link>
 
         {/* Features */}
-        <div className="grid grid-cols-3 gap-3 w-full max-w-sm mt-4">
+        <div className="grid grid-cols-2 gap-3 w-full max-w-xs mt-4">
           {[
             { icon: '📅', label: 'ניהול משמרות' },
             { icon: '⭐', label: 'תיאום אירועים' },
-            { icon: '🚑', label: 'שיבוץ כוחות' },
           ].map(({ icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-2 bg-white/10 border border-white/15 rounded-2xl py-4 px-2">
               <span className="text-2xl">{icon}</span>
