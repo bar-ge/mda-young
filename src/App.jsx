@@ -11,6 +11,8 @@ const Profile        = lazy(() => import('./pages/Profile'))
 const Manager        = lazy(() => import('./pages/Manager'))
 const Messages       = lazy(() => import('./pages/Messages'))
 const DriverVehicles = lazy(() => import('./pages/DriverVehicles'))
+const Privacy        = lazy(() => import('./pages/Privacy'))
+const Terms          = lazy(() => import('./pages/Terms'))
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false } }
@@ -76,7 +78,9 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<Splash />}>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/login"   element={<Login />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms"   element={<Terms />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Layout />
