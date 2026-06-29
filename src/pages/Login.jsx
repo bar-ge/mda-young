@@ -121,7 +121,7 @@ export default function Login() {
     birth_day: '', birth_month: '', birth_year: '',
   })
 
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/shifts" replace />
 
   function set(field, val) { setForm(f => ({ ...f, [field]: val })); setError('') }
 

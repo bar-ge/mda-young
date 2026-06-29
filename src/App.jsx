@@ -13,6 +13,7 @@ const Messages       = lazy(() => import('./pages/Messages'))
 const DriverVehicles = lazy(() => import('./pages/DriverVehicles'))
 const Privacy        = lazy(() => import('./pages/Privacy'))
 const Terms          = lazy(() => import('./pages/Terms'))
+const Landing        = lazy(() => import('./pages/Landing'))
 
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false } }
@@ -46,7 +47,7 @@ class ErrorBoundary extends Component {
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <Splash />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/" replace />
   return children
 }
 
@@ -78,24 +79,20 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<Splash />}>
           <Routes>
+            <Route path="/"        element={<Landing />} />
             <Route path="/login"   element={<Login />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms"   element={<Terms />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Navigate to="/shifts" replace />} />
-              <Route path="shifts"    element={<Shifts />} />
-              <Route path="my-shifts" element={<MyShifts />} />
-              <Route path="duty"      element={<Duty />} />
-              <Route path="messages"         element={<Messages />} />
-              <Route path="manager"          element={<Manager />} />
-              <Route path="driver-vehicles"  element={<DriverVehicles />} />
-              <Route path="profile"          element={<Profile />} />
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route path="/shifts"          element={<Shifts />} />
+              <Route path="/my-shifts"       element={<MyShifts />} />
+              <Route path="/duty"            element={<Duty />} />
+              <Route path="/messages"        element={<Messages />} />
+              <Route path="/manager"         element={<Manager />} />
+              <Route path="/driver-vehicles" element={<DriverVehicles />} />
+              <Route path="/profile"         element={<Profile />} />
             </Route>
-            <Route path="*" element={<Navigate to="/shifts" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
