@@ -126,6 +126,14 @@ export default function Shifts() {
   const selectedShifts  = selected ? displayShifts.filter(s => s.start_time.slice(0, 10) === selected) : []
   const selectedBlocked = selected ? blocked.find(b => b.date === selected) : null
 
+  // dot colour: own registrations override the shift-type colour
+  const dotFn = (s) => {
+    const a = myAssignments[s.id]
+    if (a?.status === 'confirmed') return 'bg-emerald-500'
+    if (a?.status === 'pending')   return 'bg-sky-400'
+    return shiftDot(s)
+  }
+
   // confirmed count per date for CalendarGrid badge
   const calCountMap = {}
   Object.entries(confirmedMap).forEach(([shiftId, count]) => {
@@ -167,6 +175,14 @@ export default function Shifts() {
         </div>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            מאושר
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            ממתין
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             אירוע
           </span>
@@ -185,7 +201,7 @@ export default function Shifts() {
             onNext={() => { nextMonth(); setSelected(null) }}
             shifts={displayShifts}
             blocked={blocked}
-            dotFn={shiftDot}
+            dotFn={dotFn}
             loading={loading}
             selected={selected}
             onSelect={setSelected}
@@ -206,9 +222,16 @@ export default function Shifts() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <span className="font-bold text-gray-900 text-sm text-right">
-              {(() => { const d = new Date(selected + 'T12:00:00'); return `${d.toLocaleDateString('he-IL',{weekday:'long'})} · ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}` })()}
-            </span>
+            <div className="text-right">
+              <p className="font-bold text-gray-900 text-sm">
+                {new Date(selected + 'T12:00:00').toLocaleDateString('he-IL', { weekday: 'long' })}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {selectedShifts.length === 0
+                  ? 'אין משמרות'
+                  : `${selectedShifts.length} משמרות`}
+              </p>
+            </div>
           </div>
 
           {selectedBlocked && (
