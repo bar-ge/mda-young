@@ -150,11 +150,12 @@ export default function Login() {
   /* ── OAuth ── */
   async function handleOAuth(provider) {
     setError('')
+    setLoading(true)
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/shifts` },
     })
-    if (err) setError('שגיאה בכניסה — נסה שנית')
+    if (err) { setError('שגיאה בכניסה — נסה שנית'); setLoading(false) }
   }
 
   /* ── Login ── */
@@ -191,6 +192,10 @@ export default function Login() {
     }
     if (step === 2) {
       if (!signupPwd) { setError('נא למלא תאריך לידה מלא'); return false }
+      const d = new Date(`${form.birth_year}-${form.birth_month}-${form.birth_day}`)
+      if (isNaN(d.getTime()) || d.getDate() !== Number(form.birth_day)) {
+        setError('תאריך לידה לא תקין (לדוגמה: 30/02 לא קיים)'); return false
+      }
     }
     if (step === 3) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('נא להזין כתובת אימייל תקינה'); return false }
@@ -277,11 +282,19 @@ export default function Login() {
               <PwdBox pwd={signupPwd} copied={copied} onCopy={copyPwd} />
 
               <div className="w-full flex flex-col gap-2 pt-1">
+                <div className="flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2.5 text-right">
+                  <p className="text-xs text-sky-700 leading-relaxed flex-1">
+                    שלחנו קישור אימות לאימייל שלך — אמת אותו לפני הכניסה
+                  </p>
+                  <svg className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <button onClick={() => { switchMode('login'); setForm(f => ({ ...f, password: '' })) }}
                   className={BTN_RED}>
                   כניסה לחשבון →
                 </button>
-                <p className="text-[10px] text-gray-400">ניתן להתחבר עם האימייל והסיסמה שלמעלה</p>
+                <p className="text-[10px] text-gray-400">הסיסמה היא תאריך הלידה שלך בפורמט DDMMYYYY</p>
               </div>
             </div>
           </div>
@@ -395,7 +408,7 @@ export default function Login() {
 
                   <div className="flex gap-2.5">
                     <button type="button" onClick={() => handleOAuth('google')}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200">
+                      disabled={loading} className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -405,7 +418,7 @@ export default function Login() {
                       Google
                     </button>
                     <button type="button" onClick={() => handleOAuth('azure')}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200">
+                      disabled={loading} className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#F25022" d="M1 1h10v10H1z"/>
                         <path fill="#00A4EF" d="M13 1h10v10H13z"/>
@@ -498,7 +511,7 @@ export default function Login() {
 
                       <div className="flex gap-2.5">
                         <button type="button" onClick={() => handleOAuth('google')}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200">
+                          disabled={loading} className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
                           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -508,7 +521,7 @@ export default function Login() {
                           Google
                         </button>
                         <button type="button" onClick={() => handleOAuth('azure')}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200">
+                          disabled={loading} className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50">
                           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                             <path fill="#F25022" d="M1 1h10v10H1z"/>
                             <path fill="#00A4EF" d="M13 1h10v10H13z"/>
