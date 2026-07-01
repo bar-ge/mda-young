@@ -31,17 +31,19 @@ export default function MyShifts() {
 
   const load = useCallback(async () => {
     setLoading(true)
+    const from = `${year}-${String(month + 1).padStart(2, '0')}-01`
     try {
       const { data } = await supabase
         .from('shift_assignments')
-        .select('*, shifts(*)')
+        .select('*, shifts!inner(*)')
         .eq('user_id', user.id)
+        .gte('shifts.start_time', from)
         .order('assigned_at', { ascending: false })
       if (data) setAssignments(data)
     } finally {
       setLoading(false)
     }
-  }, [user.id])
+  }, [user.id, year, month])
 
   useEffect(() => { load() }, [load, refreshKey])
   useEffect(() => { setSelected(null) }, [year, month])
