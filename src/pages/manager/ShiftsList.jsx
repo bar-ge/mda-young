@@ -340,16 +340,6 @@ export default function ShiftsList({ typeFilter = null }) {
                 <p className="text-xs font-bold text-gray-500 text-right">טווח תאריכים</p>
                 <div className="flex gap-2 items-center">
                   <div className="flex flex-col gap-1 flex-1">
-                    <label className="text-[10px] text-gray-400 text-right">עד</label>
-                    <input
-                      type="date"
-                      value={scheduleTo}
-                      onChange={e => setScheduleTo(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all"
-                    />
-                  </div>
-                  <span className="text-gray-300 font-bold mt-4">—</span>
-                  <div className="flex flex-col gap-1 flex-1">
                     <label className="text-[10px] text-gray-400 text-right">מ</label>
                     <input
                       type="date"
@@ -358,6 +348,19 @@ export default function ShiftsList({ typeFilter = null }) {
                       onChange={e => setScheduleFrom(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all"
                     />
+                    {scheduleFrom && <span className="text-[10px] text-gray-400 text-right">{scheduleFrom.split('-').reverse().join('/')}</span>}
+                  </div>
+                  <span className="text-gray-300 font-bold mt-4">—</span>
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="text-[10px] text-gray-400 text-right">עד</label>
+                    <input
+                      type="date"
+                      value={scheduleTo}
+                      min={scheduleFrom}
+                      onChange={e => setScheduleTo(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all"
+                    />
+                    {scheduleTo && <span className="text-[10px] text-gray-400 text-right">{scheduleTo.split('-').reverse().join('/')}</span>}
                   </div>
                 </div>
                 <button

@@ -1,96 +1,206 @@
 import { forwardRef } from 'react'
 
-const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
+const HE_DAYS = ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\'']
 
-function fmtDate(ts) {
-  const d = new Date(ts)
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-}
 function fmtH(ts) {
   return new Date(ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
 }
-function dayName(ts) {
-  return HE_DAYS[new Date(ts).getDay()]
+function fmtDateShort(dateStr) {
+  const [, m, d] = dateStr.split('-')
+  return `${d}/${m}`
 }
-function fmtRange(from, to) {
-  const a = new Date(from + 'T12:00:00')
-  const b = new Date(to   + 'T12:00:00')
-  const fmt = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-  return `${fmt(a)} – ${fmt(b)}`
+function fmtDateFull(dateStr) {
+  const [y, m, d] = dateStr.split('-')
+  return `${d}/${m}/${y}`
+}
+function dayLabel(dateStr) {
+  return HE_DAYS[new Date(dateStr + 'T12:00:00').getDay()]
 }
 
-const RED   = '#E30613'
-const TH = { padding: '8px 11px', background: RED, color: '#fff', border: '1px solid #c0000f', textAlign: 'right', fontWeight: 'bold', fontSize: '11px', whiteSpace: 'nowrap' }
-const TDR = { padding: '7px 11px', border: '1px solid #e5e7eb', textAlign: 'right',  fontSize: '11px', color: '#1a1a1a', verticalAlign: 'top' }
-const TDC = { ...TDR, textAlign: 'center' }
+const RED = '#E30613'
 
-const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, dateTo }, ref) => (
-  <div
-    ref={ref}
-    dir="rtl"
-    style={{ fontFamily: 'Arial, sans-serif', background: '#fff', padding: '28px 32px', width: 'max-content', minWidth: '820px' }}
-  >
-    {/* Header */}
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `3px solid ${RED}`, paddingBottom: '12px', marginBottom: '16px' }}>
-      <div style={{ fontSize: '10px', color: '#aaa' }}>הופק: {new Date().toLocaleDateString('he-IL')}</div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#111' }}>סידור משמרות — מד"א</div>
-        <div style={{ fontSize: '12px', color: '#555', marginTop: '3px' }}>{fmtRange(dateFrom, dateTo)}</div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <svg viewBox="0 0 48 48" width="28" height="28">
-          <polygon points="24,2 4.95,35 43.05,35" fill={RED}/>
-          <polygon points="24,46 4.95,13 43.05,13" fill={RED}/>
+const TH_DATE = {
+  padding: '7px 10px',
+  background: RED,
+  color: '#fff',
+  border: '1px solid #c0000f',
+  textAlign: 'center',
+  fontSize: '11px',
+  fontWeight: 'bold',
+  minWidth: '90px',
+  whiteSpace: 'nowrap',
+  lineHeight: '1.4',
+}
+const TH_ROW = {
+  padding: '8px 12px',
+  background: RED,
+  color: '#fff',
+  border: '1px solid #c0000f',
+  textAlign: 'right',
+  fontSize: '11px',
+  fontWeight: 'bold',
+  minWidth: '130px',
+  whiteSpace: 'nowrap',
+}
+
+const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, dateTo }, ref) => {
+  // All calendar dates in range
+  const allDates = []
+  const cur = new Date(dateFrom + 'T12:00:00')
+  const endDate = new Date(dateTo + 'T12:00:00')
+  while (cur <= endDate) {
+    allDates.push(cur.toISOString().slice(0, 10))
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  // Unique shift types ordered by earliest start hour
+  const seenTitles = new Set()
+  const shiftTypes = []
+  const sorted = [...shifts].sort((a, b) => {
+    const ha = new Date(a.start_time).getHours() * 60 + new Date(a.start_time).getMinutes()
+    const hb = new Date(b.start_time).getHours() * 60 + new Date(b.start_time).getMinutes()
+    return ha - hb
+  })
+  sorted.forEach(s => {
+    if (!seenTitles.has(s.title)) {
+      seenTitles.add(s.title)
+      shiftTypes.push({
+        title: s.title,
+        time: `${fmtH(s.start_time)}–${fmtH(s.end_time)}`,
+        location: s.location || '',
+      })
+    }
+  })
+
+  // Lookup: title → date → volunteers[]
+  const lookup = {}
+  shifts.forEach(s => {
+    const date = s.start_time.slice(0, 10)
+    if (!lookup[s.title]) lookup[s.title] = {}
+    lookup[s.title][date] = volunteersMap[s.id] || []
+  })
+
+  return (
+    <div
+      ref={ref}
+      dir="rtl"
+      style={{
+        fontFamily: 'Arial, sans-serif',
+        background: '#fff',
+        padding: '24px 28px',
+        width: 'max-content',
+        minWidth: '500px',
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: `3px solid ${RED}`,
+        paddingBottom: '10px',
+        marginBottom: '14px',
+      }}>
+        <div style={{ fontSize: '10px', color: '#bbb', textAlign: 'left' }}>
+          הופק: {new Date().toLocaleDateString('he-IL')}
+          <br />
+          {shifts.length} משמרות · {shiftTypes.length} סוגים
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '17px', fontWeight: 'bold', color: '#111' }}>
+            סידור משמרות — מד&quot;א
+          </div>
+          <div style={{ fontSize: '11px', color: '#555', marginTop: '3px' }}>
+            {fmtDateFull(dateFrom)} – {fmtDateFull(dateTo)}
+          </div>
+        </div>
+        <svg viewBox="0 0 48 48" width="26" height="26" style={{ flexShrink: 0 }}>
+          <polygon points="24,2 4.95,35 43.05,35" fill={RED} />
+          <polygon points="24,46 4.95,13 43.05,13" fill={RED} />
         </svg>
       </div>
-    </div>
 
-    {/* Table */}
-    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-      <thead>
-        <tr>
-          {['יום','תאריך','כותרת משמרת','שעות','מיקום','מתנדבים מאושרים'].map(h => (
-            <th key={h} style={TH}>{h}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {shifts.length === 0 ? (
-          <tr>
-            <td colSpan={6} style={{ ...TDC, padding: '24px', color: '#aaa' }}>אין משמרות בטווח זה</td>
-          </tr>
-        ) : shifts.map((s, i) => {
-          const vols = volunteersMap[s.id] || []
-          return (
-            <tr key={s.id} style={{ background: i % 2 === 0 ? '#f8fafc' : '#fff' }}>
-              <td style={{ ...TDC, fontWeight: '600' }}>{dayName(s.start_time)}</td>
-              <td style={TDC}>{fmtDate(s.start_time)}</td>
-              <td style={{ ...TDR, fontWeight: '600' }}>{s.title}</td>
-              <td style={{ ...TDC, whiteSpace: 'nowrap' }}>{fmtH(s.start_time)}–{fmtH(s.end_time)}</td>
-              <td style={TDR}>{s.location || '—'}</td>
-              <td style={{ ...TDR, maxWidth: '280px', lineHeight: '1.5' }}>
-                {vols.length === 0
-                  ? <span style={{ color: '#bbb', fontStyle: 'italic' }}>אין מאושרים</span>
-                  : vols.map((v, vi) => (
-                    <span key={vi}>
-                      {v.name}
-                      {vi < vols.length - 1 && <span style={{ color: '#ccc' }}> · </span>}
-                    </span>
-                  ))
-                }
-              </td>
+      {shifts.length === 0 ? (
+        <div style={{ padding: '32px', textAlign: 'center', color: '#bbb', fontSize: '13px' }}>
+          אין משמרות בטווח זה
+        </div>
+      ) : (
+        <table style={{ borderCollapse: 'collapse', width: 'max-content' }}>
+          <thead>
+            <tr>
+              {/* Shift-type column header */}
+              <th style={TH_ROW}>סוג משמרת</th>
+              {/* Date columns — chronological order (RTL: first DOM child = rightmost) */}
+              {allDates.map(date => (
+                <th key={date} style={TH_DATE}>
+                  <div>{dayLabel(date)}</div>
+                  <div style={{ fontWeight: 'normal', fontSize: '10px', marginTop: '1px' }}>
+                    {fmtDateShort(date)}
+                  </div>
+                </th>
+              ))}
             </tr>
-          )
-        })}
-      </tbody>
-    </table>
-
-    {/* Footer */}
-    <div style={{ fontSize: '9px', color: '#ccc', textAlign: 'left', marginTop: '10px' }}>
-      סה"כ {shifts.length} משמרות
+          </thead>
+          <tbody>
+            {shiftTypes.map((type, rowIdx) => (
+              <tr key={type.title}>
+                {/* Row header */}
+                <td style={{
+                  padding: '8px 12px',
+                  background: '#fff5f5',
+                  border: '1px solid #e5e7eb',
+                  textAlign: 'right',
+                  verticalAlign: 'middle',
+                }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '11px', color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                    {type.title}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#888', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                    {type.time}
+                    {type.location && ` · ${type.location}`}
+                  </div>
+                </td>
+                {/* Date cells */}
+                {allDates.map(date => {
+                  const vols = lookup[type.title]?.[date]
+                  const hasShift = vols !== undefined
+                  return (
+                    <td key={date} style={{
+                      padding: '7px 8px',
+                      border: '1px solid #e5e7eb',
+                      textAlign: 'center',
+                      fontSize: '10px',
+                      color: '#1a1a1a',
+                      background: rowIdx % 2 === 0 ? '#f8fafc' : '#fff',
+                      verticalAlign: 'top',
+                      minWidth: '90px',
+                      maxWidth: '160px',
+                      lineHeight: '1.6',
+                      wordBreak: 'break-word',
+                    }}>
+                      {!hasShift ? (
+                        <span style={{ color: '#e5e7eb' }}>—</span>
+                      ) : vols.length === 0 ? (
+                        <span style={{ color: '#ccc', fontStyle: 'italic', fontSize: '9px' }}>ריק</span>
+                      ) : (
+                        vols.map((v, i) => (
+                          <span key={i}>
+                            {v.name}
+                            {i < vols.length - 1 && <span style={{ color: '#ccc' }}> · </span>}
+                          </span>
+                        ))
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
-  </div>
-))
+  )
+})
 
 ShiftsScheduleExport.displayName = 'ShiftsScheduleExport'
 export default ShiftsScheduleExport
