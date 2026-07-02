@@ -68,6 +68,7 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
         title: s.title,
         time: `${fmtH(s.start_time)}–${fmtH(s.end_time)}`,
         location: s.location || '',
+        veteranOnly: s.veteran_only || false,
       })
     }
   })
@@ -147,13 +148,24 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
                 {/* Row header */}
                 <td style={{
                   padding: '8px 12px',
-                  background: '#fff5f5',
+                  background: type.veteranOnly ? '#faf5ff' : '#fff5f5',
                   border: '1px solid #e5e7eb',
                   textAlign: 'right',
                   verticalAlign: 'middle',
                 }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11px', color: '#1a1a1a', whiteSpace: 'nowrap' }}>
-                    {type.title}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
+                    {type.veteranOnly && (
+                      <span style={{
+                        fontSize: '9px',
+                        background: '#ede9fe',
+                        color: '#6d28d9',
+                        padding: '1px 5px',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.02em',
+                      }}>בוגר</span>
+                    )}
+                    <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#1a1a1a' }}>{type.title}</span>
                   </div>
                   <div style={{ fontSize: '10px', color: '#888', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     {type.time}
