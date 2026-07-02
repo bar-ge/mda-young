@@ -6,6 +6,35 @@ import EventExportTable from '../../components/EventExportTable'
 import ShiftsScheduleExport from '../../components/ShiftsScheduleExport'
 import EditEventPanel from './EditEventPanel'
 
+function DateField({ value, onChange, min, max }) {
+  const display = value
+    ? `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`
+    : ''
+  return (
+    <div className="relative w-full">
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        onChange={onChange}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+      />
+      <div className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-gray-50 pointer-events-none select-none">
+        <span className={display ? 'text-gray-800' : 'text-gray-400 text-xs'}>
+          {display || 'DD/MM/YYYY'}
+        </span>
+        <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 function formatDate(ts) {
   const d = new Date(ts)
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`
@@ -341,26 +370,12 @@ export default function ShiftsList({ typeFilter = null }) {
                 <div className="flex gap-2 items-center">
                   <div className="flex flex-col gap-1 flex-1">
                     <label className="text-[10px] text-gray-400 text-right">מ</label>
-                    <input
-                      type="date"
-                      value={scheduleFrom}
-                      max={scheduleTo}
-                      onChange={e => setScheduleFrom(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all"
-                    />
-                    {scheduleFrom && <span className="text-[10px] text-gray-400 text-right">{scheduleFrom.split('-').reverse().join('/')}</span>}
+                    <DateField value={scheduleFrom} max={scheduleTo} onChange={e => setScheduleFrom(e.target.value)} />
                   </div>
                   <span className="text-gray-300 font-bold mt-4">—</span>
                   <div className="flex flex-col gap-1 flex-1">
                     <label className="text-[10px] text-gray-400 text-right">עד</label>
-                    <input
-                      type="date"
-                      value={scheduleTo}
-                      min={scheduleFrom}
-                      onChange={e => setScheduleTo(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E30613]/20 focus:border-[#E30613] transition-all"
-                    />
-                    {scheduleTo && <span className="text-[10px] text-gray-400 text-right">{scheduleTo.split('-').reverse().join('/')}</span>}
+                    <DateField value={scheduleTo} min={scheduleFrom} onChange={e => setScheduleTo(e.target.value)} />
                   </div>
                 </div>
                 <button
