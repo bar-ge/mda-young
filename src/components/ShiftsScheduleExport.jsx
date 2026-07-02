@@ -68,10 +68,14 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
         title: s.title,
         time: `${fmtH(s.start_time)}–${fmtH(s.end_time)}`,
         location: s.location || '',
-        veteranOnly: s.veteran_only || false,
       })
     }
   })
+
+  // Dates that have at least one veteran_only shift
+  const veteranDates = new Set(
+    shifts.filter(s => s.veteran_only).map(s => s.start_time.slice(0, 10))
+  )
 
   // Lookup: title → date → volunteers[]
   const lookup = {}
@@ -129,43 +133,46 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
         <table style={{ borderCollapse: 'collapse', width: 'max-content' }}>
           <thead>
             <tr>
-              {/* Shift-type column header */}
               <th style={TH_ROW}>סוג משמרת</th>
-              {/* Date columns — chronological order (RTL: first DOM child = rightmost) */}
-              {allDates.map(date => (
-                <th key={date} style={TH_DATE}>
-                  <div>{dayLabel(date)}</div>
-                  <div style={{ fontWeight: 'normal', fontSize: '10px', marginTop: '1px' }}>
-                    {fmtDateShort(date)}
-                  </div>
-                </th>
-              ))}
+              {allDates.map(date => {
+                const isVeteranDay = veteranDates.has(date)
+                return (
+                  <th key={date} style={TH_DATE}>
+                    <div>{dayLabel(date)}</div>
+                    <div style={{ fontWeight: 'normal', fontSize: '10px', marginTop: '1px' }}>
+                      {fmtDateShort(date)}
+                    </div>
+                    {isVeteranDay && (
+                      <div style={{
+                        marginTop: '3px',
+                        display: 'inline-block',
+                        fontSize: '8px',
+                        background: 'rgba(255,255,255,0.22)',
+                        color: '#fff',
+                        padding: '1px 5px',
+                        borderRadius: '6px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.03em',
+                      }}>בוגר</div>
+                    )}
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
             {shiftTypes.map((type, rowIdx) => (
               <tr key={type.title}>
-                {/* Row header */}
+                {/* Row header — no veteran badge here */}
                 <td style={{
                   padding: '8px 12px',
-                  background: type.veteranOnly ? '#faf5ff' : '#fff5f5',
+                  background: '#fff5f5',
                   border: '1px solid #e5e7eb',
                   textAlign: 'right',
                   verticalAlign: 'middle',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
-                    {type.veteranOnly && (
-                      <span style={{
-                        fontSize: '9px',
-                        background: '#ede9fe',
-                        color: '#6d28d9',
-                        padding: '1px 5px',
-                        borderRadius: '8px',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.02em',
-                      }}>בוגר</span>
-                    )}
-                    <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#1a1a1a' }}>{type.title}</span>
+                  <div style={{ fontWeight: 'bold', fontSize: '11px', color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                    {type.title}
                   </div>
                   <div style={{ fontSize: '10px', color: '#888', marginTop: '2px', whiteSpace: 'nowrap' }}>
                     {type.time}
