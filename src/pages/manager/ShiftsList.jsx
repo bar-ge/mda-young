@@ -139,7 +139,17 @@ export default function ShiftsList({ typeFilter = null }) {
   const [scheduleLoading,      setScheduleLoading]      = useState(false)
   const [scheduleExporting,    setScheduleExporting]    = useState(false)
   const [schedulePrinting,     setSchedulePrinting]     = useState(false)
+  const [hiddenTitles,         setHiddenTitles]         = useState(new Set())
   const scheduleRef = useRef(null)
+
+  // Derived: unique shift titles ordered by first start_time hour
+  const scheduleShiftTypes = [...new Map(
+    [...scheduleShifts]
+      .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+      .map(s => [s.title, s])
+  ).values()].map(s => s.title)
+
+  const visibleScheduleShifts = scheduleShifts.filter(s => !hiddenTitles.has(s.title))
 
   // export panel state (events only)
   const [showExport,     setShowExport]     = useState(false)
@@ -189,9 +199,11 @@ export default function ShiftsList({ typeFilter = null }) {
         })
         setScheduleShifts(sh)
         setScheduleVolsMap(vmap)
+        setHiddenTitles(new Set())
       } else {
         setScheduleShifts([])
         setScheduleVolsMap({})
+        setHiddenTitles(new Set())
       }
     } finally {
       setScheduleLoading(false)
@@ -429,6 +441,36 @@ export default function ShiftsList({ typeFilter = null }) {
                 </button>
               </div>
 
+              {/* Shift-type filter chips */}
+              {scheduleShiftTypes.length > 0 && !scheduleLoading && (
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[10px] text-gray-400 text-right">הסתר משמרות מהסידור:</p>
+                  <div className="flex flex-wrap gap-1.5 justify-end">
+                    {scheduleShiftTypes.map(title => {
+                      const hidden = hiddenTitles.has(title)
+                      return (
+                        <button
+                          key={title}
+                          onClick={() => setHiddenTitles(prev => {
+                            const next = new Set(prev)
+                            hidden ? next.delete(title) : next.add(title)
+                            return next
+                          })}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                            hidden
+                              ? 'bg-gray-100 text-gray-400 border-gray-200 line-through'
+                              : 'bg-white text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          {!hidden && <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] shrink-0" />}
+                          {title}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Preview */}
               {(scheduleShifts.length > 0 || scheduleLoading) && (
                 <div className="rounded-xl border border-gray-100 overflow-auto max-h-60">
@@ -439,7 +481,7 @@ export default function ShiftsList({ typeFilter = null }) {
                   ) : (
                     <div className="origin-top-left" style={{ transform: 'scale(0.55)', width: '181.8%' }}>
                       <ShiftsScheduleExport
-                        shifts={scheduleShifts}
+                        shifts={visibleScheduleShifts}
                         volunteersMap={scheduleVolsMap}
                         dateFrom={scheduleFrom}
                         dateTo={scheduleTo}
@@ -483,7 +525,7 @@ export default function ShiftsList({ typeFilter = null }) {
           <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>
             <ShiftsScheduleExport
               ref={scheduleRef}
-              shifts={scheduleShifts}
+              shifts={visibleScheduleShifts}
               volunteersMap={scheduleVolsMap}
               dateFrom={scheduleFrom}
               dateTo={scheduleTo}
