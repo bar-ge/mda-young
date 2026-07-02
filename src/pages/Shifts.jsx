@@ -245,11 +245,15 @@ export default function Shifts() {
             <p className="text-gray-400 text-sm text-center py-3">אין משמרות ביום זה</p>
           ) : (
             selectedShifts.map(shift => {
-              const assignment = myAssignments[shift.id]
-              const isPast     = new Date(shift.start_time) <= now
-              const statusCfg  = statusConfig[shift.status] || statusConfig.open
-              const isEvent    = shift.shift_type === 'event'
-              const isFull     = shift.max_volunteers > 0 && (confirmedMap[shift.id] || 0) >= shift.max_volunteers
+              const assignment   = myAssignments[shift.id]
+              const shiftEnded  = new Date(shift.end_time || shift.start_time) <= now
+              const shiftStarted = new Date(shift.start_time) <= now
+              const isOpen      = shift.status === 'open'
+              const canRegister = !shiftStarted && isOpen
+              const effStatus   = shiftEnded && isOpen ? 'completed' : shift.status
+              const statusCfg   = statusConfig[effStatus] || statusConfig.open
+              const isEvent     = shift.shift_type === 'event'
+              const isFull      = shift.max_volunteers > 0 && (confirmedMap[shift.id] || 0) >= shift.max_volunteers
 
               return (
                 <div key={shift.id} className={`flex flex-col gap-3 rounded-2xl border p-3.5 ${
@@ -295,7 +299,7 @@ export default function Shifts() {
                       {statusCfg.label}
                     </span>
 
-                    {!isPast && shift.status === 'open' && (
+                    {canRegister ? (
                       isFull && !assignment ? (
                         <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-50 text-red-500 border border-red-100">
                           המשמרת מלאה
@@ -323,7 +327,20 @@ export default function Shifts() {
                           {acting === shift.id ? '...' : 'הרשמה'}
                         </button>
                       )
-                    )}
+                    ) : assignment ? (
+                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
+                        assignment.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' :
+                        assignment.status === 'declined'  ? 'bg-red-50 text-red-600' :
+                        'bg-amber-50 text-amber-700'
+                      }`}>
+                        {assignment.status === 'pending'   ? '⏳ נרשמת' :
+                         assignment.status === 'confirmed' ? '✓ מאושר' : '✗ נדחה'}
+                      </span>
+                    ) : !shiftEnded && !isOpen ? (
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-gray-50 text-gray-400 border border-gray-100">
+                        ההרשמה סגורה
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               )
