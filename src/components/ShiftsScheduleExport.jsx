@@ -72,17 +72,15 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
     }
   })
 
-  // Dates that have at least one veteran_only shift
-  const veteranDates = new Set(
-    shifts.filter(s => s.veteran_only).map(s => s.start_time.slice(0, 10))
-  )
-
-  // Lookup: title → date → volunteers[]
+  // Lookup: title → date → { volunteers, veteranOnly }
   const lookup = {}
   shifts.forEach(s => {
     const date = s.start_time.slice(0, 10)
     if (!lookup[s.title]) lookup[s.title] = {}
-    lookup[s.title][date] = volunteersMap[s.id] || []
+    lookup[s.title][date] = {
+      volunteers: volunteersMap[s.id] || [],
+      veteranOnly: s.veteran_only || false,
+    }
   })
 
   return (
@@ -134,30 +132,14 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
           <thead>
             <tr>
               <th style={TH_ROW}>סוג משמרת</th>
-              {allDates.map(date => {
-                const isVeteranDay = veteranDates.has(date)
-                return (
-                  <th key={date} style={TH_DATE}>
-                    <div>{dayLabel(date)}</div>
-                    <div style={{ fontWeight: 'normal', fontSize: '10px', marginTop: '1px' }}>
-                      {fmtDateShort(date)}
-                    </div>
-                    {isVeteranDay && (
-                      <div style={{
-                        marginTop: '3px',
-                        display: 'inline-block',
-                        fontSize: '8px',
-                        background: 'rgba(255,255,255,0.22)',
-                        color: '#fff',
-                        padding: '1px 5px',
-                        borderRadius: '6px',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.03em',
-                      }}>בוגר</div>
-                    )}
-                  </th>
-                )
-              })}
+              {allDates.map(date => (
+                <th key={date} style={TH_DATE}>
+                  <div>{dayLabel(date)}</div>
+                  <div style={{ fontWeight: 'normal', fontSize: '10px', marginTop: '1px' }}>
+                    {fmtDateShort(date)}
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -181,8 +163,14 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
                 </td>
                 {/* Date cells */}
                 {allDates.map(date => {
-                  const vols = lookup[type.title]?.[date]
-                  const hasShift = vols !== undefined
+                  const cell = lookup[type.title]?.[date]
+                  const hasShift = cell !== undefined
+                  const vols = cell?.volunteers || []
+                  const isVeteran = cell?.veteranOnly || false
+                  const items = [
+                    ...(isVeteran ? [{ name: 'בוגר', isTag: true }] : []),
+                    ...vols.map(v => ({ name: v.name, isTag: false })),
+                  ]
                   return (
                     <td key={date} style={{
                       padding: '7px 8px',
@@ -199,13 +187,15 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
                     }}>
                       {!hasShift ? (
                         <span style={{ color: '#e5e7eb' }}>—</span>
-                      ) : vols.length === 0 ? (
+                      ) : items.length === 0 ? (
                         <span style={{ color: '#ccc', fontStyle: 'italic', fontSize: '9px' }}>ריק</span>
                       ) : (
-                        vols.map((v, i) => (
+                        items.map((item, i) => (
                           <span key={i}>
-                            {v.name}
-                            {i < vols.length - 1 && <span style={{ color: '#ccc' }}> · </span>}
+                            <span style={item.isTag ? { color: '#7c3aed', fontWeight: 'bold' } : {}}>
+                              {item.name}
+                            </span>
+                            {i < items.length - 1 && <span style={{ color: '#ccc' }}> · </span>}
                           </span>
                         ))
                       )}
