@@ -117,10 +117,6 @@ const ShiftsScheduleExport = forwardRef(({ shifts, volunteersMap, dateFrom, date
             {fmtDateFull(dateFrom)} – {fmtDateFull(dateTo)}
           </div>
         </div>
-        <svg viewBox="0 0 48 48" width="26" height="26" style={{ flexShrink: 0 }}>
-          <polygon points="24,2 4.95,35 43.05,35" fill={RED} />
-          <polygon points="24,46 4.95,13 43.05,13" fill={RED} />
-        </svg>
       </div>
 
       {shifts.length === 0 ? (
